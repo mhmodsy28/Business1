@@ -5,159 +5,84 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#4f46e5">
 <title>دفتر الحسابات</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
 <style>
 :root{
   --bg:#f2f5fb; --card:#fff; --text:#18203a; --muted:#7c85a0;
   --primary:#4f46e5; --primary-d:#4338ca; --border:#e4e8f2;
   --green:#10b981; --red:#ef4444; --amber:#f59e0b;
-  --wa:#25d366; --radius:14px; --shadow:0 2px 12px rgba(24,32,58,.06);
-  --nav-h:64px;
+  --wa:#25d366; --radius:14px; --nav-h:64px;
 }
-[data-theme="dark"]{
-  --bg:#0f1424; --card:#171d33; --text:#e9edf7; --muted:#8d97b5;
-  --border:#242c47; --shadow:0 2px 12px rgba(0,0,0,.3);
-}
+[data-theme="dark"]{--bg:#0f1424;--card:#171d33;--text:#e9edf7;--muted:#8d97b5;--border:#242c47}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;
-  background:var(--bg);color:var(--text);font-size:15px;
-  -webkit-font-smoothing:antialiased;overscroll-behavior-y:none;
-}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased}
 .hidden{display:none !important}
 .muted{color:var(--muted)}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
-input,select,textarea{
-  font-family:inherit;font-size:16px;width:100%;padding:13px 14px;
-  border:1.5px solid var(--border);border-radius:12px;background:var(--card);
-  color:var(--text);outline:none;transition:.15s;
-}
+input,select,textarea{font-family:inherit;font-size:16px;width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);outline:none}
 input:focus,select:focus,textarea:focus{border-color:var(--primary)}
 label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;color:var(--muted)}
 
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  padding:13px 20px;border-radius:12px;font-size:15px;font-weight:600;
-  transition:.15s;white-space:nowrap;min-height:46px;
-}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:13px 20px;border-radius:12px;font-size:15px;font-weight:600;transition:.15s;min-height:46px;white-space:nowrap}
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--primary);color:#fff}
-.btn.primary:hover{background:var(--primary-d)}
 .btn.ghost{background:var(--card);border:1.5px solid var(--border);color:var(--text)}
 .btn.danger{background:var(--red);color:#fff}
 .btn.success{background:var(--green);color:#fff}
 .btn.wa{background:var(--wa);color:#fff}
 .btn.full{width:100%}
 .btn.sm{padding:8px 14px;font-size:13.5px;min-height:36px;border-radius:10px}
-.icon-btn{
-  width:42px;height:42px;border-radius:11px;display:inline-flex;
-  align-items:center;justify-content:center;font-size:16px;transition:.15s;
-}
-.icon-btn:active{background:var(--bg)}
+.icon-btn{width:42px;height:42px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
 .link-btn{color:var(--primary);font-size:14px;font-weight:600;padding:8px 0}
-.link-btn:hover{text-decoration:underline}
 
-/* ═══ شاشة الدخول ═══ */
-.auth{
-  min-height:100vh;min-height:100dvh;display:flex;align-items:center;
-  justify-content:center;padding:20px;
-  background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 60%,#2563eb 100%);
-}
-.auth-card{
-  background:var(--card);width:100%;max-width:420px;border-radius:22px;
-  padding:32px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25);
-}
-.auth-brand{
-  width:62px;height:62px;margin:0 auto 14px;border-radius:18px;font-size:30px;
-  display:flex;align-items:center;justify-content:center;color:#fff;
-  background:linear-gradient(135deg,#4f46e5,#7c3aed);
-}
+.auth{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 60%,#2563eb 100%)}
+.auth-card{background:var(--card);width:100%;max-width:420px;border-radius:22px;padding:32px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.auth-brand{width:62px;height:62px;margin:0 auto 14px;border-radius:18px;font-size:30px;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(135deg,#4f46e5,#7c3aed)}
 .auth-card h1{font-size:21px;margin-bottom:6px;text-align:center}
 .auth-card>p{font-size:13.5px;text-align:center;margin-bottom:22px;color:var(--muted)}
 .tabs{display:flex;background:var(--bg);border-radius:11px;padding:4px;margin-bottom:20px}
-.tab{flex:1;padding:11px;border-radius:8px;font-size:14px;font-weight:600;color:var(--muted);transition:.15s}
-.tab.active{background:var(--card);color:var(--primary);box-shadow:var(--shadow)}
+.tab{flex:1;padding:11px;border-radius:8px;font-size:14px;font-weight:600;color:var(--muted)}
+.tab.active{background:var(--card);color:var(--primary)}
 .auth-form .btn{margin-top:22px}
 
-/* ═══ التطبيق ═══ */
 #appScreen{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
-.topbar{
-  background:var(--card);border-bottom:1px solid var(--border);
-  padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
-  gap:10px;position:sticky;top:0;z-index:40;
-  padding-top:calc(14px + env(safe-area-inset-top));
-}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:40;padding-top:calc(14px + env(safe-area-inset-top))}
 .topbar h2{font-size:17px;font-weight:700}
 .topbar p{font-size:12px;color:var(--muted);margin-top:2px}
-.burger{
-  width:42px;height:42px;border-radius:11px;display:flex;align-items:center;
-  justify-content:center;font-size:20px;background:var(--bg);
-}
 .top-actions{display:flex;gap:6px}
+.main{flex:1;padding:14px 14px calc(var(--nav-h) + 24px + env(safe-area-inset-bottom));max-width:1100px;width:100%;margin:0 auto}
 
-.main{
-  flex:1;padding:14px 14px calc(var(--nav-h) + 24px + env(safe-area-inset-bottom));
-  max-width:1100px;width:100%;margin:0 auto;
-}
-
-/* ═══ شريط التنقل السفلي ═══ */
-.bottom-nav{
-  position:fixed;bottom:0;left:0;right:0;background:var(--card);
-  border-top:1px solid var(--border);z-index:45;
-  display:flex;justify-content:space-around;
-  padding-bottom:env(safe-area-inset-bottom);
-  height:calc(var(--nav-h) + env(safe-area-inset-bottom));
-}
-.bnav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;
-  padding:8px 2px;transition:.15s;
-}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);z-index:45;display:flex;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom);height:calc(var(--nav-h) + env(safe-area-inset-bottom))}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;padding:8px 2px}
 .bnav-item .ic{font-size:21px;line-height:1}
 .bnav-item.active{color:var(--primary)}
 
-/* ═══ القائمة الجانبية (سطح المكتب فقط) ═══ */
 @media(min-width:900px){
   #appScreen{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
   .bottom-nav{display:none}
   .main{padding:20px 22px 22px;grid-column:2}
-  .topbar{grid-column:2;padding-top:14px}
-  .burger{display:none}
-  .sidebar-desktop{
-    grid-row:1/3;background:var(--card);border-left:1px solid var(--border);
-    padding:18px 12px;display:flex;flex-direction:column;gap:3px;
-    position:sticky;top:0;height:100vh;overflow-y:auto;
-  }
-  .side-brand{display:flex;align-items:center;gap:10px;padding:0 8px 16px;
-    border-bottom:1px solid var(--border);margin-bottom:12px}
-  .side-brand .ic{width:38px;height:38px;border-radius:11px;display:flex;
-    align-items:center;justify-content:center;font-size:19px;color:#fff;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed)}
+  .topbar{grid-column:2}
+  .sidebar-desktop{grid-row:1/3;background:var(--card);border-left:1px solid var(--border);padding:18px 12px;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .side-brand{display:flex;align-items:center;gap:10px;padding:0 8px 16px;border-bottom:1px solid var(--border);margin-bottom:12px}
+  .side-brand .ic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;background:linear-gradient(135deg,#4f46e5,#7c3aed)}
   .side-brand b{font-size:14px;display:block}
   .side-brand small{font-size:11px;color:var(--muted)}
   .side-nav{display:flex;flex-direction:column;gap:3px}
-  .nav-item{
-    display:flex;align-items:center;gap:10px;padding:11px 12px;
-    border-radius:10px;font-size:14px;font-weight:600;color:var(--muted);
-    transition:.15s;width:100%;text-align:right;
-  }
+  .nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:600;color:var(--muted);width:100%;text-align:right}
   .nav-item:hover{background:var(--bg);color:var(--text)}
   .nav-item.active{background:var(--primary);color:#fff}
   .side-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
 }
-@media(max-width:899px){
-  .sidebar-desktop{display:none}
-}
+@media(max-width:899px){.sidebar-desktop{display:none}}
 
-/* ═══ البطاقات ═══ */
 .grid{display:grid;gap:12px}
 .stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-.stat{
-  background:var(--card);border-radius:var(--radius);padding:16px;
-  border:1px solid var(--border);position:relative;overflow:hidden;
-}
-.stat::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;
-  width:4px;background:var(--primary)}
+.stat{background:var(--card);border-radius:var(--radius);padding:16px;border:1px solid var(--border);position:relative;overflow:hidden}
+.stat::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:var(--primary)}
 .stat.g::before{background:var(--green)}
 .stat.r::before{background:var(--red)}
 .stat.a::before{background:var(--amber)}
@@ -166,254 +91,159 @@ label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;color:var(-
 .stat .sub{font-size:11px;color:var(--muted);margin-top:4px}
 
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.card-head{padding:14px 16px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .card-head h3{font-size:15px}
 .card-body{padding:16px}
 
-/* ═══ الجداول ═══ */
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;font-size:14px;min-width:100%}
-th{text-align:right;padding:11px 14px;font-size:11.5px;color:var(--muted);
-  font-weight:700;background:var(--bg);white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:right;padding:11px 14px;font-size:11.5px;color:var(--muted);font-weight:700;background:var(--bg);white-space:nowrap}
 td{padding:13px 14px;border-top:1px solid var(--border);vertical-align:middle}
 .amount{font-weight:700;white-space:nowrap}
-.amount.pos{color:var(--red)} .amount.neg{color:var(--green)}
+.amount.pos{color:var(--red)}
+.amount.neg{color:var(--green)}
 .pill{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
 .pill.debt,.pill.exp{background:rgba(239,68,68,.12);color:var(--red)}
 .pill.pay,.pill.inc{background:rgba(16,185,129,.12);color:var(--green)}
 .empty{padding:40px 18px;text-align:center;color:var(--muted);font-size:14px}
 .empty .e-ico{font-size:38px;display:block;margin-bottom:10px;opacity:.5}
-.avatar{
-  width:36px;height:36px;border-radius:10px;flex-shrink:0;
-  background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
-  display:inline-flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:13px;
-}
+.avatar{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .cell-user{display:flex;align-items:center;gap:10px;min-width:0}
-.cell-user b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell-user b{display:block;font-size:13.5px}
 .cell-user small{color:var(--muted);font-size:11.5px}
 .actions{display:flex;gap:2px;justify-content:flex-end}
 .actions .icon-btn{width:36px;height:36px;font-size:14px}
-.search{
-  display:flex;align-items:center;gap:6px;background:var(--bg);
-  border-radius:11px;padding:0 12px;min-width:180px;flex:1;
-}
+.search{display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:11px;padding:0 12px;min-width:180px;flex:1}
 .search input{border:none;background:none;padding:11px 0;box-shadow:none;font-size:15px}
-.search input:focus{box-shadow:none}
 
-/* ═══ النوافذ (Modals) ═══ */
-.overlay{
-  position:fixed;inset:0;background:rgba(15,20,36,.55);
-  z-index:200;display:flex;align-items:flex-end;justify-content:center;
-  animation:fade .18s;
-}
-@media(min-width:600px){
-  .overlay{align-items:center;padding:20px}
-}
+.overlay{position:fixed;inset:0;background:rgba(15,20,36,.55);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fade .18s}
+@media(min-width:600px){.overlay{align-items:center;padding:20px}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
-.modal{
-  background:var(--card);width:100%;max-width:520px;
-  max-height:96vh;max-height:96dvh;display:flex;flex-direction:column;
-  border-radius:22px 22px 0 0;animation:up .25s;
-  padding-bottom:env(safe-area-inset-bottom);
-}
-@media(min-width:600px){
-  .modal{border-radius:18px;max-height:90vh;animation:pop .2s}
-}
+.modal{background:var(--card);width:100%;max-width:520px;max-height:96vh;max-height:96dvh;display:flex;flex-direction:column;border-radius:22px 22px 0 0;animation:up .25s;padding-bottom:env(safe-area-inset-bottom)}
+@media(min-width:600px){.modal{border-radius:18px;max-height:90vh}}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
-.modal-head{
-  padding:16px 18px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  position:sticky;top:0;background:var(--card);z-index:1;
-  border-radius:22px 22px 0 0;
-}
-@media(min-width:600px){.modal-head{border-radius:18px 18px 0 0}}
+.modal-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;background:var(--card);z-index:1;border-radius:22px 22px 0 0}
 .modal-head h3{font-size:16px}
 .modal-body{padding:18px;overflow-y:auto;flex:1}
-.modal-foot{
-  display:flex;gap:10px;margin-top:20px;padding-top:14px;
-  border-top:1px solid var(--border);
-}
+.modal-foot{display:flex;gap:10px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)}
 .modal-foot .btn{flex:1}
 
-/* ═══ بنود الفاتورة (مواد) ═══ */
 .line{display:grid;grid-template-columns:1fr 70px 90px 38px;gap:6px;align-items:center;margin-bottom:8px}
 .line input,.line select{padding:10px;font-size:14px;border-radius:10px}
-.line .icon-btn{width:38px;height:38px}
 
-/* ═══ خطط الاشتراك ═══ */
 .plans{display:grid;gap:12px;grid-template-columns:1fr}
 @media(min-width:560px){.plans{grid-template-columns:1fr 1fr}}
 @media(min-width:900px){.plans{grid-template-columns:repeat(4,1fr)}}
-.plan{
-  background:var(--card);border:2px solid var(--border);border-radius:var(--radius);
-  padding:20px 16px;text-align:center;position:relative;
-}
+.plan{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:20px 16px;text-align:center;position:relative}
 .plan.best{border-color:var(--primary)}
-.plan .tag{
-  position:absolute;top:-10px;inset-inline-start:50%;transform:translateX(50%);
-  background:var(--primary);color:#fff;font-size:11px;font-weight:700;
-  padding:3px 12px;border-radius:20px;white-space:nowrap;
-}
+.plan .tag{position:absolute;top:-10px;inset-inline-start:50%;transform:translateX(50%);background:var(--primary);color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;white-space:nowrap}
 .plan h4{font-size:16px;margin-bottom:10px}
 .plan .price{font-size:28px;font-weight:800;color:var(--primary);letter-spacing:-1px}
 .plan .price small{font-size:12px;font-weight:600;color:var(--muted)}
-.plan .save{display:inline-block;background:rgba(16,185,129,.13);color:var(--green);
-  font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:8px}
+.plan .save{display:inline-block;background:rgba(16,185,129,.13);color:var(--green);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:8px}
 .plan ul{list-style:none;margin:14px 0;font-size:13px;color:var(--muted);text-align:right}
 .plan ul li{padding:5px 0;padding-inline-start:20px;position:relative}
-.plan ul li::before{content:"✓";position:absolute;inset-inline-start:0;
-  color:var(--green);font-weight:800}
+.plan ul li::before{content:"✓";position:absolute;inset-inline-start:0;color:var(--green);font-weight:800}
 .plan .btn{width:100%;margin-top:4px}
 
-.wa-box{
-  background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;
-  padding:20px 18px;border-radius:16px;text-align:center;margin-bottom:18px;
-}
+.wa-box{background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;padding:20px 18px;border-radius:16px;text-align:center;margin-bottom:18px}
 .wa-box h3{font-size:16px;margin-bottom:6px}
 .wa-box p{font-size:13px;opacity:.95;margin-bottom:12px}
-.wa-box .num{
-  font-size:24px;font-weight:800;letter-spacing:2px;direction:ltr;
-  display:inline-block;margin-bottom:14px;
-  background:rgba(255,255,255,.18);padding:6px 16px;border-radius:12px;
-}
+.wa-box .num{font-size:24px;font-weight:800;letter-spacing:2px;direction:ltr;display:inline-block;margin-bottom:14px;background:rgba(255,255,255,.18);padding:6px 16px;border-radius:12px}
 .wa-box .btn{background:#fff;color:#128c7e;font-weight:700}
 
-/* ═══ التنبيهات ═══ */
-#toasts{position:fixed;top:14px;inset-inline-start:14px;inset-inline-end:14px;
-  z-index:600;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-@media(min-width:600px){#toasts{inset-inline-end:auto;max-width:340px;top:20px}}
-.toast{
-  background:var(--card);border:1px solid var(--border);
-  border-inline-start:4px solid var(--green);padding:13px 16px;
-  border-radius:12px;font-size:14px;font-weight:600;
-  box-shadow:0 8px 24px rgba(0,0,0,.14);animation:slide .25s;
-}
+#toasts{position:fixed;top:14px;inset-inline-start:14px;inset-inline-end:14px;z-index:600;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+@media(min-width:600px){#toasts{inset-inline-end:auto;max-width:340px}}
+.toast{background:var(--card);border:1px solid var(--border);border-inline-start:4px solid var(--green);padding:13px 16px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.14);animation:slide .25s}
 .toast.err{border-inline-start-color:var(--red)}
 @keyframes slide{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
 
-/* ═══ شاشة القفل ═══ */
-.lock{position:fixed;inset:0;background:var(--bg);z-index:300;
-  overflow-y:auto;padding:24px 16px;
-  padding-top:calc(24px + env(safe-area-inset-top));
-  padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+.lock{position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding:24px 16px}
 .lock-inner{max-width:900px;margin:0 auto}
 .lock-head{text-align:center;margin-bottom:24px}
 .lock-head .ic{font-size:52px;display:block;margin-bottom:10px}
 .lock-head h2{font-size:22px;margin-bottom:6px}
 
-/* ═══ شاشة الأدمن ═══ */
-.admin-header{
-  background:linear-gradient(135deg,#1e1b4b,#4f46e5);
-  color:#fff;padding:20px 18px;border-radius:16px;margin-bottom:16px;
-  display:flex;align-items:center;gap:14px;
-}
+.admin-header{background:linear-gradient(135deg,#1e1b4b,#4f46e5);color:#fff;padding:20px 18px;border-radius:16px;margin-bottom:16px;display:flex;align-items:center;gap:14px}
 .admin-header .ic{font-size:36px}
 .admin-header h2{font-size:18px}
 .admin-header p{font-size:13px;opacity:.85;margin-top:2px}
 
-.code-chip{
-  display:inline-block;background:var(--bg);border:1.5px dashed var(--border);
-  padding:6px 12px;border-radius:8px;font-family:monospace;
-  font-size:13.5px;font-weight:700;direction:ltr;letter-spacing:1px;
-}
+.code-chip{display:inline-block;background:var(--bg);border:1.5px dashed var(--border);padding:6px 12px;border-radius:8px;font-family:monospace;font-size:13.5px;font-weight:700;direction:ltr;letter-spacing:1px}
 .code-used{opacity:.5;text-decoration:line-through}
-
 .filter-bar{display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto;padding-bottom:2px}
 .filter-bar .btn.sm{padding:7px 13px;font-size:12.5px;min-height:34px;white-space:nowrap}
-
-.row-between{display:flex;align-items:center;justify-content:space-between;
-  margin-top:14px;margin-bottom:8px;gap:10px;flex-wrap:wrap}
+.row-between{display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:8px;gap:10px;flex-wrap:wrap}
 .row-between span{font-size:13px;font-weight:700;color:var(--muted)}
 
-.banner{
-  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);
-  color:var(--amber);padding:12px 16px;border-radius:12px;font-size:13px;
-  font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:14px;
-}
-
-/* نقاط استجابة عامة */
-@media(max-width:400px){
-  .stat .val{font-size:18px}
-  .stat{padding:14px}
-  .bnav-item{font-size:10px}
-  .bnav-item .ic{font-size:19px}
-}
+.loading{display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:16px;color:var(--muted);flex-direction:column;gap:14px}
+.spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<!-- ═══════════ شاشة تسجيل الدخول للمستخدمين ═══════════ -->
+<div id="loadingScreen" class="loading">
+  <div class="spinner"></div>
+  <div>جاري التحميل...</div>
+</div>
+
 <div id="authScreen" class="auth hidden">
   <div class="auth-card">
     <div class="auth-brand">📒</div>
     <h1>دفتر الحسابات</h1>
     <p>إدارة الديون والعملاء والمواد والأرباح</p>
-
     <div class="tabs">
       <button class="tab active" data-tab="login">تسجيل الدخول</button>
       <button class="tab" data-tab="register">إنشاء حساب</button>
     </div>
-
     <form id="loginForm" class="auth-form">
       <label>رقم الهاتف</label>
-      <input id="loginPhone" type="tel" placeholder="05xxxxxxxx" autocomplete="username" inputmode="tel">
+      <input id="loginPhone" type="tel" placeholder="05xxxxxxxx" inputmode="tel">
       <label>كلمة المرور</label>
-      <input id="loginPass" type="password" placeholder="••••••" autocomplete="current-password">
+      <input id="loginPass" type="password" placeholder="••••••">
       <button class="btn primary full" type="submit">دخول</button>
     </form>
-
     <form id="registerForm" class="auth-form hidden">
       <label>الاسم الكامل</label>
-      <input id="regName" type="text" placeholder="محمد أحمد" autocomplete="name">
+      <input id="regName" type="text" placeholder="محمد أحمد">
       <label>رقم الهاتف</label>
-      <input id="regPhone" type="tel" placeholder="05xxxxxxxx" autocomplete="username" inputmode="tel">
+      <input id="regPhone" type="tel" placeholder="05xxxxxxxx" inputmode="tel">
       <label>كلمة المرور</label>
-      <input id="regPass" type="password" placeholder="4 أحرف على الأقل" autocomplete="new-password">
+      <input id="regPass" type="password" placeholder="4 أحرف على الأقل">
       <label>تأكيد كلمة المرور</label>
-      <input id="regPass2" type="password" placeholder="••••••" autocomplete="new-password">
+      <input id="regPass2" type="password" placeholder="••••••">
       <button class="btn primary full" type="submit">إنشاء الحساب</button>
       <p class="muted" style="font-size:12.5px;text-align:center;margin-top:14px;line-height:1.6">
-        تحصل على تجربة مجانية 3 أيام<br>
-        للاشتراك: واتساب 0992320306
+        تحصل على تجربة مجانية 3 أيام<br>للاستفسار: واتساب 0992320306
       </p>
     </form>
   </div>
 </div>
 
-<!-- ═══════════ شاشة الأدمن (رابط مخفي #/admin) ═══════════ -->
 <div id="adminLoginScreen" class="auth hidden">
   <div class="auth-card">
     <div class="auth-brand" style="background:linear-gradient(135deg,#1e1b4b,#dc2626)">🛡️</div>
     <h1>لوحة المدير</h1>
     <p>دخول خاص للمسؤول فقط</p>
-
     <form id="adminLoginForm" class="auth-form">
       <label>اسم المستخدم</label>
-      <input id="admUser" type="text" placeholder="admin" autocomplete="username" value="admin">
+      <input id="admUser" type="text" value="admin" autocomplete="username">
       <label>كلمة المرور</label>
-      <input id="admPass" type="password" placeholder="••••••" autocomplete="current-password">
+      <input id="admPass" type="password" placeholder="••••••">
       <button class="btn primary full" type="submit">دخول</button>
     </form>
-
     <div style="text-align:center;margin-top:18px">
-      <button class="link-btn" onclick="location.hash='#/'">← رجوع لصفحة المستخدمين</button>
+      <button class="link-btn" onclick="location.hash='#/'">← رجوع</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════ التطبيق الرئيسي ═══════════ -->
 <div id="appScreen" class="hidden">
-  <!-- قائمة سطح المكتب -->
   <aside class="sidebar-desktop">
     <div class="side-brand">
       <div class="ic">📒</div>
-      <div>
-        <b id="sideName">—</b>
-        <small id="sidePhone">—</small>
-      </div>
+      <div><b id="sideName">—</b><small id="sidePhone">—</small></div>
     </div>
     <nav class="side-nav">
       <button class="nav-item active" data-view="dashboard">📊 لوحة التحكم</button>
@@ -430,24 +260,11 @@ td{padding:13px 14px;border-top:1px solid var(--border);vertical-align:middle}
       <button class="btn ghost full sm" id="logoutBtn">🚪 خروج</button>
     </div>
   </aside>
-
-  <!-- الشريط العلوي -->
   <header class="topbar">
-    <div style="display:flex;align-items:center;gap:10px;min-width:0">
-      <div>
-        <h2 id="pageTitle">لوحة التحكم</h2>
-        <p id="pageSub">نظرة عامة</p>
-      </div>
-    </div>
+    <div><h2 id="pageTitle">لوحة التحكم</h2><p id="pageSub">نظرة عامة</p></div>
     <div class="top-actions" id="topActions"></div>
   </header>
-
-  <!-- المحتوى -->
-  <main class="main">
-    <div id="viewRoot"></div>
-  </main>
-
-  <!-- شريط التنقل السفلي (جوال) -->
+  <main class="main"><div id="viewRoot"></div></main>
   <nav class="bottom-nav">
     <button class="bnav-item active" data-view="dashboard"><span class="ic">📊</span><span>الرئيسية</span></button>
     <button class="bnav-item" data-view="customers"><span class="ic">👥</span><span>العملاء</span></button>
@@ -457,44 +274,44 @@ td{padding:13px 14px;border-top:1px solid var(--border);vertical-align:middle}
   </nav>
 </div>
 
-<!-- ═══════════ شاشة قفل الاشتراك ═══════════ -->
 <div id="lockScreen" class="lock hidden">
   <div class="lock-inner">
-    <div class="lock-head">
-      <span class="ic">🔒</span>
-      <h2>انتهى اشتراكك</h2>
-      <p class="muted">تواصل معنا عبر واتساب للتفعيل الفوري</p>
-    </div>
+    <div class="lock-head"><span class="ic">🔒</span><h2>انتهى اشتراكك</h2><p class="muted">تواصل معنا عبر واتساب للتفعيل الفوري</p></div>
     <div id="lockPlans"></div>
-    <div style="text-align:center;margin-top:24px">
-      <button class="link-btn" id="lockLogout">🚪 تسجيل الخروج</button>
-    </div>
+    <div style="text-align:center;margin-top:24px"><button class="link-btn" id="lockLogout">🚪 تسجيل الخروج</button></div>
   </div>
 </div>
 
-<!-- ═══════════ شاشة الأدمن الرئيسية ═══════════ -->
 <div id="adminScreen" class="hidden" style="min-height:100vh;background:var(--bg)">
   <header class="topbar" style="background:#1e1b4b;color:#fff;border:none">
-    <div>
-      <h2 style="color:#fff">🛡️ لوحة المدير</h2>
-      <p style="color:rgba(255,255,255,.7)">إدارة كاملة للمستخدمين والأكواد</p>
-    </div>
+    <div><h2 style="color:#fff">🛡️ لوحة المدير</h2><p style="color:rgba(255,255,255,.7)">إدارة كاملة للمستخدمين والأكواد</p></div>
     <div class="top-actions">
-      <button class="icon-btn" style="background:rgba(255,255,255,.15);color:#fff" onclick="adminLogout()" title="خروج">🚪</button>
+      <button class="icon-btn" style="background:rgba(255,255,255,.15);color:#fff" onclick="adminLogout()">🚪</button>
     </div>
   </header>
-  <main class="main" style="padding-bottom:24px">
-    <div id="adminRoot"></div>
-  </main>
+  <main class="main" style="padding-bottom:24px"><div id="adminRoot"></div></main>
 </div>
 
-<!-- التنبيهات -->
 <div id="toasts"></div>
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   أدوات مساعدة
+   ✅ إعدادات Firebase (مدمجة وجاهزة)
    ═══════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDZXHx-D-UMHmWE_PVZy-GfKDQJmc1rl0g",
+  authDomain: "business-ledger-f14ea.firebaseapp.com",
+  databaseURL: "https://business-ledger-f14ea-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "business-ledger-f14ea",
+  storageBucket: "business-ledger-f14ea.firebasestorage.app",
+  messagingSenderId: "1073226216304",
+  appId: "1:1073226216304:web:4277c57ec1afcd896995b5"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ═══════════════════════════════════════════════════════ */
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -502,32 +319,16 @@ const DAY = 86400000;
 
 const WHATSAPP_NUMBER  = '963992320306';
 const WHATSAPP_DISPLAY = '0992320306';
-
-/* 🔐 بيانات الأدمن */
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'aalmwt10';
 
-const esc = s => String(s ?? '').replace(/[&<>"']/g,
-  m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-
-function hash(str) {
-  let h = 5381;
-  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) + str.charCodeAt(i);
-  return (h >>> 0).toString(16);
-}
-function fmtDate(ts) {
-  const d = new Date(ts), p = n => String(n).padStart(2, '0');
-  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
-}
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function hash(str) { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h) + str.charCodeAt(i); return (h >>> 0).toString(16); }
+function fmtDate(ts) { const d = new Date(ts), p = n => String(n).padStart(2,'0'); return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`; }
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const cur = () => (state.data?.settings?.currency) || 'ر.س';
-function money(n) {
-  n = Number(n) || 0;
-  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + cur();
-}
-function initials(name) {
-  return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('');
-}
+function money(n) { n = Number(n) || 0; return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + cur(); }
+function initials(name) { return (name || '?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join(''); }
 function toast(msg, type = 'ok') {
   const el = document.createElement('div');
   el.className = 'toast ' + type;
@@ -537,46 +338,27 @@ function toast(msg, type = 'ok') {
   setTimeout(() => el.remove(), 2800);
 }
 
-/* ═══════════════════════════════════════════════════════
-   التخزين
-   ═══════════════════════════════════════════════════════ */
 const STORE = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
   del(k)    { localStorage.removeItem(k); }
 };
-const K = {
-  users:   'ldg_users_v2',
-  codes:   'ldg_codes_v2',
-  session: 'ldg_session_v2',
-  admin:   'ldg_admin_session_v2',
-  theme:   'ldg_theme_v2',
-  data:    id => 'ldg_data_v2_' + id
-};
+const K = { session:'ldg_sess_v3', admin:'ldg_adm_v3', theme:'ldg_theme_v3' };
 
-/* ═══════════════════════════════════════════════════════
-   الحالة
-   ═══════════════════════════════════════════════════════ */
 let state = {
   user: null,
   data: { customers: [], transactions: [], ledger: [], items: [], settings: { currency: 'ر.س' } },
   view: 'dashboard'
 };
 
-/* ═══════════════════════════════════════════════════════
-   الخطط
-   ═══════════════════════════════════════════════════════ */
 const PLANS = [
-  { id:'m1',  name:'شهري',    days:30,  price:5  },
-  { id:'m3',  name:'3 أشهر',  days:90,  price:13, save:'وفر 13%' },
-  { id:'m6',  name:'6 أشهر',  days:180, price:24, save:'وفر 20%', best:true },
-  { id:'m12', name:'سنوي',    days:365, price:40, save:'وفر 33%' }
+  { id:'m1',  name:'شهري',   days:30,  price:5  },
+  { id:'m3',  name:'3 أشهر', days:90,  price:13, save:'وفر 13%' },
+  { id:'m6',  name:'6 أشهر', days:180, price:24, save:'وفر 20%', best:true },
+  { id:'m12', name:'سنوي',   days:365, price:40, save:'وفر 33%' }
 ];
 const planById = id => PLANS.find(p => p.id === id) || PLANS[0];
 
-/* ═══════════════════════════════════════════════════════
-   100 كود تفعيل
-   ═══════════════════════════════════════════════════════ */
 const PRESET_CODES = [
   'LED-M-4K7P','LED-M-9X2N','LED-M-3B8Q','LED-M-6H1W','LED-M-2J5Z',
   'LED-M-8R4Y','LED-M-1D9T','LED-M-7F3C','LED-M-5L6M','LED-M-0V2G',
@@ -599,11 +381,27 @@ const PRESET_CODES = [
   'LED-Y-2M7P','LED-Y-8K4V','LED-Y-5N1T','LED-Y-0W9B','LED-Y-3R6H',
   'LED-Y-9D2X','LED-Y-7F5L','LED-Y-1A8M','LED-Y-4P0C','LED-Y-6T3Y'
 ];
-const planFromCode = c => ({ M:'m1', Q:'m3', H:'m6', Y:'m12' })[c.split('-')[1]] || 'm1';
+const planFromCode = c => ({M:'m1',Q:'m3',H:'m6',Y:'m12'})[c.split('-')[1]] || 'm1';
 
-/* ═══════════════════════════════════════════════════════
-   الاشتراك
-   ═══════════════════════════════════════════════════════ */
+async function fbGet(path) { const snap = await db.ref(path).once('value'); return snap.val(); }
+async function fbSet(path, val) { await db.ref(path).set(val); }
+async function fbUpdate(path, val) { await db.ref(path).update(val); }
+async function fbRemove(path) { await db.ref(path).remove(); }
+
+async function initCodesIfNeeded() {
+  const codes = await fbGet('codes');
+  if (!codes || Object.keys(codes).length === 0) {
+    const now = Date.now();
+    const codeObj = {};
+    PRESET_CODES.forEach((code, i) => {
+      const plan = planFromCode(code);
+      codeObj[code] = { code, plan, days: planById(plan).days, used: false, createdAt: now - i * 1000 };
+    });
+    await fbSet('codes', codeObj);
+    console.log('✅ تم إنشاء 100 كود في Firebase');
+  }
+}
+
 function subInfo(u) {
   const s = u.subscription || {};
   const end = new Date(s.endDate || 0).getTime();
@@ -617,75 +415,20 @@ function subInfo(u) {
     planName: s.plan === 'trial' ? 'تجربة مجانية' : planById(s.plan).name
   };
 }
-function extendSubscription(userId, planId, days) {
-  const users = STORE.get(K.users, []);
-  const u = users.find(x => x.id === userId);
-  if (!u) return;
-  const now = Date.now();
-  const curEnd = new Date(u.subscription?.endDate || 0).getTime();
-  const base = curEnd > now ? curEnd : now;
-  u.subscription = {
-    plan: planId,
-    startDate: now,
-    endDate: base + days * DAY,
-    history: [...(u.subscription?.history || []), { plan: planId, days, at: now }]
-  };
-  STORE.set(K.users, users);
-  if (state.user && state.user.id === userId) state.user = u;
-}
 
-/* ═══════════════════════════════════════════════════════
-   تهيئة
-   ═══════════════════════════════════════════════════════ */
-function initSeed() {
-  if (!STORE.get(K.users)) STORE.set(K.users, []);
-  if (!STORE.get(K.codes) || STORE.get(K.codes).length === 0) {
-    const now = Date.now();
-    STORE.set(K.codes, PRESET_CODES.map((code, i) => {
-      const plan = planFromCode(code);
-      return { code, plan, days: planById(plan).days, used: false, createdAt: now - i * 1000 };
-    }));
-  }
-}
-
-/* ═══════════════════════════════════════════════════════
-   الوضع الليلي
-   ═══════════════════════════════════════════════════════ */
-const savedTheme = STORE.get(K.theme, 'light');
-document.documentElement.dataset.theme = savedTheme;
-function updateThemeBtn() {
-  const btn = $('#themeBtn');
-  if (!btn) return;
-  btn.textContent = document.documentElement.dataset.theme === 'dark'
-    ? '☀️ الوضع النهاري' : '🌙 الوضع الليلي';
-}
-document.addEventListener('click', e => {
-  if (e.target.id === 'themeBtn') {
-    const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = t;
-    STORE.set(K.theme, t);
-    updateThemeBtn();
-  }
-});
-
-/* ═══════════════════════════════════════════════════════
-   التنقل بين الشاشات
-   ═══════════════════════════════════════════════════════ */
 function hideAll() {
-  ['authScreen','adminLoginScreen','appScreen','lockScreen','adminScreen']
-    .forEach(id => $('#' + id).classList.add('hidden'));
+  ['loadingScreen','authScreen','adminLoginScreen','appScreen','lockScreen','adminScreen']
+    .forEach(id => { const el = $('#' + id); if (el) el.classList.add('hidden'); });
 }
 
-function route() {
-  initSeed();
+async function route() {
   const hash = (location.hash || '#/').toLowerCase();
 
-  /* مسار الأدمن */
   if (hash === '#/admin') {
     if (STORE.get(K.admin, false)) {
       hideAll();
       $('#adminScreen').classList.remove('hidden');
-      renderAdmin();
+      await renderAdmin();
     } else {
       hideAll();
       $('#adminLoginScreen').classList.remove('hidden');
@@ -693,40 +436,54 @@ function route() {
     return;
   }
 
-  /* مسار المستخدم */
   const sess = STORE.get(K.session);
-  if (!sess) {
+  if (!sess || !sess.phone) {
     hideAll();
     $('#authScreen').classList.remove('hidden');
     return;
   }
-  const users = STORE.get(K.users, []);
-  const u = users.find(x => x.id === sess.id);
-  if (!u) { STORE.del(K.session); return route(); }
 
-  state.user = u;
-  state.data = STORE.get(K.data(u.id),
-    { customers: [], transactions: [], ledger: [], items: [], settings: { currency: 'ر.س' } });
-  state.data.settings = state.data.settings || { currency: 'ر.س' };
-  if (!state.data.ledger) state.data.ledger = [];
+  try {
+    const user = await fbGet('users/' + sess.phone);
+    if (!user) { STORE.del(K.session); hideAll(); $('#authScreen').classList.remove('hidden'); return; }
 
-  hideAll();
-  const si = subInfo(u);
-  if (!si.active) {
-    $('#lockScreen').classList.remove('hidden');
-    renderLock();
-  } else {
-    $('#appScreen').classList.remove('hidden');
-    updateSidebar();
-    renderView();
-    updateThemeBtn();
+    state.user = { ...user, id: sess.phone };
+
+    const data = await fbGet('userData/' + sess.phone);
+    state.data = data || { customers: [], transactions: [], ledger: [], items: [], settings: { currency: 'ر.س' } };
+    if (!state.data.customers) state.data.customers = [];
+    if (!state.data.transactions) state.data.transactions = [];
+    if (!state.data.ledger) state.data.ledger = [];
+    if (!state.data.items) state.data.items = [];
+    if (!state.data.settings) state.data.settings = { currency: 'ر.س' };
+
+    hideAll();
+    const si = subInfo(state.user);
+    if (!si.active) {
+      $('#lockScreen').classList.remove('hidden');
+      renderLock();
+    } else {
+      $('#appScreen').classList.remove('hidden');
+      updateSidebar();
+      renderView();
+      updateThemeBtn();
+    }
+  } catch (e) {
+    console.error(e);
+    toast('خطأ في الاتصال: ' + e.message, 'err');
+    hideAll();
+    $('#authScreen').classList.remove('hidden');
   }
 }
 window.addEventListener('hashchange', route);
 
-/* ═══════════════════════════════════════════════════════
-   نموذج التسجيل / الدخول
-   ═══════════════════════════════════════════════════════ */
+async function saveData() {
+  if (!state.user) return;
+  try {
+    await fbSet('userData/' + state.user.id, state.data);
+  } catch (e) { console.error('فشل الحفظ:', e); toast('فشل الحفظ', 'err'); }
+}
+
 $$('.tab').forEach(t => t.addEventListener('click', () => {
   $$('.tab').forEach(x => x.classList.remove('active'));
   t.classList.add('active');
@@ -735,72 +492,66 @@ $$('.tab').forEach(t => t.addEventListener('click', () => {
   $('#registerForm').classList.toggle('hidden', isLogin);
 }));
 
-$('#registerForm').addEventListener('submit', e => {
+$('#registerForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const name  = $('#regName').value.trim();
+  const name = $('#regName').value.trim();
   const phone = $('#regPhone').value.trim();
-  const pass  = $('#regPass').value;
+  const pass = $('#regPass').value;
   const pass2 = $('#regPass2').value;
 
-  if (name.length < 2)                   return toast('الاسم قصير جداً', 'err');
-  if (!/^[0-9+\-\s]{6,15}$/.test(phone)) return toast('رقم الهاتف غير صالح', 'err');
-  if (pass.length < 4)                   return toast('كلمة المرور 4 أحرف على الأقل', 'err');
-  if (pass !== pass2)                    return toast('كلمتا المرور غير متطابقتين', 'err');
+  if (name.length < 2) return toast('الاسم قصير', 'err');
+  if (!/^[0-9+\-\s]{6,15}$/.test(phone)) return toast('رقم غير صالح', 'err');
+  if (pass.length < 4) return toast('كلمة المرور قصيرة', 'err');
+  if (pass !== pass2) return toast('كلمتا المرور مختلفتان', 'err');
 
-  const users = STORE.get(K.users, []);
-  if (users.some(u => u.phone === phone)) return toast('الرقم مسجّل مسبقاً', 'err');
+  try {
+    const exists = await fbGet('users/' + phone);
+    if (exists) return toast('الرقم مسجّل مسبقاً', 'err');
 
-  const now = Date.now();
-  const user = {
-    id: uid(), name, phone,
-    pass: hash(pass + 'ldg'),
-    createdAt: now,
-    subscription: { plan: 'trial', startDate: now, endDate: now + 3 * DAY, history: [] }
-  };
-  users.push(user);
-  STORE.set(K.users, users);
-  STORE.set(K.data(user.id), { customers: [], transactions: [], ledger: [], items: [], settings: { currency: 'ر.س' } });
-  STORE.set(K.session, { id: user.id });
-  toast('تم إنشاء الحساب 🎉');
-  route();
+    const now = Date.now();
+    await fbSet('users/' + phone, {
+      name, phone,
+      pass: hash(pass + 'ldg'),
+      createdAt: now,
+      subscription: { plan: 'trial', startDate: now, endDate: now + 3 * DAY, history: [] }
+    });
+    await fbSet('userData/' + phone, { customers: [], transactions: [], ledger: [], items: [], settings: { currency: 'ر.س' } });
+    STORE.set(K.session, { phone });
+    toast('تم إنشاء الحساب 🎉');
+    route();
+  } catch (err) {
+    console.error(err);
+    toast('خطأ: ' + err.message, 'err');
+  }
 });
 
-$('#loginForm').addEventListener('submit', e => {
+$('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const phone = $('#loginPhone').value.trim();
-  const pass  = $('#loginPass').value;
-  const users = STORE.get(K.users, []);
-  const u = users.find(x => x.phone === phone);
-  if (!u || u.pass !== hash(pass + 'ldg')) return toast('الرقم أو كلمة المرور خاطئة', 'err');
-  STORE.set(K.session, { id: u.id });
-  toast('مرحباً ' + u.name);
-  route();
+  const pass = $('#loginPass').value;
+
+  try {
+    const user = await fbGet('users/' + phone);
+    if (!user || user.pass !== hash(pass + 'ldg')) return toast('الرقم أو كلمة المرور خاطئة', 'err');
+    STORE.set(K.session, { phone });
+    toast('مرحباً ' + user.name);
+    route();
+  } catch (err) {
+    toast('خطأ: ' + err.message, 'err');
+  }
 });
 
-/* ═══════════════════════════════════════════════════════
-   دخول الأدمن
-   ═══════════════════════════════════════════════════════ */
 $('#adminLoginForm').addEventListener('submit', e => {
   e.preventDefault();
-  const u = $('#admUser').value.trim();
-  const p = $('#admPass').value;
-  if (u !== ADMIN_USER || p !== ADMIN_PASS) {
-    return toast('بيانات الدخول خاطئة', 'err');
-  }
+  if ($('#admUser').value.trim() !== ADMIN_USER || $('#admPass').value !== ADMIN_PASS)
+    return toast('بيانات خاطئة', 'err');
   STORE.set(K.admin, true);
-  toast('مرحباً بك يا مدير');
+  toast('مرحباً يا مدير');
   route();
 });
 
-function adminLogout() {
-  STORE.del(K.admin);
-  location.hash = '#/';
-  toast('تم الخروج');
-}
+function adminLogout() { STORE.del(K.admin); location.hash = '#/'; toast('تم الخروج'); }
 
-/* ═══════════════════════════════════════════════════════
-   التنقل في التطبيق
-   ═══════════════════════════════════════════════════════ */
 function updateSidebar() {
   if (!state.user) return;
   $('#sideName').textContent = state.user.name;
@@ -813,10 +564,7 @@ document.addEventListener('click', e => {
   const nav = e.target.closest('.nav-item, .bnav-item');
   if (nav) {
     const view = nav.dataset.view;
-    if (view === 'more') {
-      openMoreMenu();
-      return;
-    }
+    if (view === 'more') return openMoreMenu();
     setView(view);
   }
 });
@@ -831,19 +579,16 @@ function setView(view) {
 function openMoreMenu() {
   openModal({
     title: 'القائمة',
-    body: `
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="btn ghost full" style="justify-content:flex-start;padding:15px" onclick="closeModalAndView('items')">📦 المواد</button>
-        <button class="btn ghost full" style="justify-content:flex-start;padding:15px" onclick="closeModalAndView('subscription')">⭐ الاشتراك</button>
-        <button class="btn ghost full" style="justify-content:flex-start;padding:15px" onclick="closeModalAndView('settings')">⚙️ الإعدادات</button>
-        <button class="btn ghost full" style="justify-content:flex-start;padding:15px" onclick="closeModalAndView('dashboard')">📊 لوحة التحكم</button>
-        <button class="btn ghost full" style="justify-content:flex-start;padding:15px" onclick="toggleThemeFromMenu()">🌓 تبديل المظهر</button>
-        <button class="btn danger full" style="justify-content:flex-start;padding:15px;margin-top:8px" onclick="doLogout()">🚪 تسجيل الخروج</button>
-      </div>`,
+    body: `<div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn ghost full" style="justify-content:flex-start;padding:15px" onclick="closeAllModals();setView('items')">📦 المواد</button>
+      <button class="btn ghost full" style="justify-content:flex-start;padding:15px" onclick="closeAllModals();setView('subscription')">⭐ الاشتراك</button>
+      <button class="btn ghost full" style="justify-content:flex-start;padding:15px" onclick="closeAllModals();setView('settings')">⚙️ الإعدادات</button>
+      <button class="btn ghost full" style="justify-content:flex-start;padding:15px" onclick="toggleThemeFromMenu()">🌓 تبديل المظهر</button>
+      <button class="btn danger full" style="justify-content:flex-start;padding:15px;margin-top:8px" onclick="closeAllModals();logout()">🚪 تسجيل الخروج</button>
+    </div>`,
     submitText: null
   });
 }
-function closeModalAndView(v) { closeAllModals(); setView(v); }
 function toggleThemeFromMenu() {
   const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = t;
@@ -851,78 +596,68 @@ function toggleThemeFromMenu() {
   closeAllModals();
   toast('تم التبديل');
 }
-function doLogout() { closeAllModals(); logout(); }
-
 function logout() { STORE.del(K.session); location.hash = '#/'; location.reload(); }
 document.addEventListener('click', e => {
   if (e.target.id === 'logoutBtn' || e.target.id === 'lockLogout') logout();
 });
 
-/* ═══════════════════════════════════════════════════════
-   عرض الواجهات
-   ═══════════════════════════════════════════════════════ */
+const savedTheme = STORE.get(K.theme, 'light');
+document.documentElement.dataset.theme = savedTheme;
+function updateThemeBtn() {
+  const btn = $('#themeBtn');
+  if (btn) btn.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️ الوضع النهاري' : '🌙 الوضع الليلي';
+}
+document.addEventListener('click', e => {
+  if (e.target.id === 'themeBtn') {
+    const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t;
+    STORE.set(K.theme, t);
+    updateThemeBtn();
+  }
+});
+
 const TITLES = {
-  dashboard:    ['لوحة التحكم', 'نظرة عامة على حساباتك'],
-  customers:    ['العملاء', 'إدارة العملاء وأرصدتهم'],
-  transactions: ['الحركات', 'كل الديون والدفعات'],
-  ledger:       ['الأرباح والخسائر', 'الإيرادات والمصروفات اليومية'],
-  items:        ['المواد', 'قائمة المواد والأسعار'],
-  subscription: ['الاشتراك', 'إدارة خطة اشتراكك'],
-  settings:     ['الإعدادات', 'بيانات الحساب والتفضيلات']
+  dashboard:['لوحة التحكم','نظرة عامة'], customers:['العملاء','إدارة العملاء'],
+  transactions:['الحركات','الديون والدفعات'], ledger:['الأرباح والخسائر','الإيرادات والمصروفات'],
+  items:['المواد','المواد والمخزون'], subscription:['الاشتراك','خطتك'], settings:['الإعدادات','حسابك']
 };
 
 function renderView() {
-  const [t, s] = TITLES[state.view] || ['', ''];
+  const [t, s] = TITLES[state.view] || ['',''];
   $('#pageTitle').textContent = t;
   $('#pageSub').textContent = s;
   $('#topActions').innerHTML = '';
   $('#viewRoot').innerHTML = '';
-  ({
-    dashboard: renderDashboard, customers: renderCustomers,
-    transactions: renderTransactions, ledger: renderLedger,
-    items: renderItems, subscription: renderSubscription,
-    settings: renderSettings
-  }[state.view] || renderDashboard)();
+  ({ dashboard:renderDashboard, customers:renderCustomers, transactions:renderTransactions,
+     ledger:renderLedger, items:renderItems, subscription:renderSubscription,
+     settings:renderSettings }[state.view] || renderDashboard)();
 }
 
-function saveData() { STORE.set(K.data(state.user.id), state.data); }
 function customerById(id) { return state.data.customers.find(c => c.id === id); }
-function balanceOf(cid) {
-  return state.data.transactions.filter(t => t.customerId === cid)
-    .reduce((s, t) => s + (t.type === 'debt' ? t.amount : -t.amount), 0);
-}
+function balanceOf(cid) { return state.data.transactions.filter(t => t.customerId === cid).reduce((s,t) => s + (t.type === 'debt' ? t.amount : -t.amount), 0); }
 function totals() {
   const tx = state.data.transactions;
-  const debt = tx.filter(t => t.type === 'debt').reduce((s, t) => s + t.amount, 0);
-  const paid = tx.filter(t => t.type === 'payment').reduce((s, t) => s + t.amount, 0);
+  const debt = tx.filter(t => t.type === 'debt').reduce((s,t) => s + t.amount, 0);
+  const paid = tx.filter(t => t.type === 'payment').reduce((s,t) => s + t.amount, 0);
   return { debt, paid, remain: debt - paid };
 }
-function ledgerStats(entries) {
-  const inc = entries.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
-  const exp = entries.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
+function ledgerStats(e) {
+  const inc = e.filter(x => x.type === 'income').reduce((s,x) => s + x.amount, 0);
+  const exp = e.filter(x => x.type === 'expense').reduce((s,x) => s + x.amount, 0);
   return { inc, exp, net: inc - exp };
 }
-function isToday(ts) {
-  const d = new Date(ts), n = new Date();
-  return d.getDate() === n.getDate() && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
-}
+function isToday(ts) { const d = new Date(ts), n = new Date(); return d.getDate()===n.getDate() && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear(); }
 
-/* ─── لوحة التحكم ─── */
 function renderDashboard() {
-  const { debt, paid, remain } = totals();
-  const customers = state.data.customers;
+  const t = totals();
   const todayStats = ledgerStats((state.data.ledger || []).filter(e => isToday(e.date)));
+  const debtors = state.data.customers.map(c => ({...c, bal: balanceOf(c.id)})).filter(c => c.bal > 0.001).sort((a,b) => b.bal - a.bal).slice(0, 5);
+  const recent = [...state.data.transactions].sort((a,b) => b.createdAt - a.createdAt).slice(0, 5);
+  const netLabel = todayStats.net > 0 ? 'ربح اليوم' : todayStats.net < 0 ? 'خسارة اليوم' : 'لا ربح ولا خسارة';
 
   $('#topActions').innerHTML = `
     <button class="btn primary sm" onclick="openTxModal('debt')">+ دين</button>
     <button class="btn success sm" onclick="openTxModal('payment')">دفعة</button>`;
-
-  const debtors = customers.map(c => ({ ...c, bal: balanceOf(c.id) }))
-    .filter(c => c.bal > 0.001).sort((a, b) => b.bal - a.bal).slice(0, 5);
-  const recent = [...state.data.transactions].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
-
-  const netColor = todayStats.net > 0 ? 'var(--green)' : todayStats.net < 0 ? 'var(--red)' : 'var(--muted)';
-  const netLabel = todayStats.net > 0 ? 'ربح اليوم' : todayStats.net < 0 ? 'خسارة اليوم' : 'لا ربح ولا خسارة';
 
   $('#viewRoot').innerHTML = `
     <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff">
@@ -935,127 +670,78 @@ function renderDashboard() {
         </div>
       </div>
     </div>
-
     <div class="grid stats" style="margin-bottom:14px">
-      <div class="stat r">
-        <div class="lbl">إجمالي الديون</div>
-        <div class="val">${money(debt)}</div>
-      </div>
-      <div class="stat g">
-        <div class="lbl">المسدَّد</div>
-        <div class="val">${money(paid)}</div>
-      </div>
-      <div class="stat a">
-        <div class="lbl">المتبقي</div>
-        <div class="val">${money(remain)}</div>
-      </div>
-      <div class="stat">
-        <div class="lbl">العملاء</div>
-        <div class="val">${customers.length}</div>
-      </div>
+      <div class="stat r"><div class="lbl">إجمالي الديون</div><div class="val">${money(t.debt)}</div></div>
+      <div class="stat g"><div class="lbl">المسدَّد</div><div class="val">${money(t.paid)}</div></div>
+      <div class="stat a"><div class="lbl">المتبقي</div><div class="val">${money(t.remain)}</div></div>
+      <div class="stat"><div class="lbl">العملاء</div><div class="val">${state.data.customers.length}</div></div>
     </div>
-
     <div class="card" style="margin-bottom:14px">
-      <div class="card-head">
-        <h3>أكبر المديونين</h3>
-        <button class="link-btn" onclick="setView('customers')">عرض الكل</button>
-      </div>
+      <div class="card-head"><h3>أكبر المديونين</h3>
+        <button class="link-btn" onclick="setView('customers')">الكل</button></div>
       <div class="table-wrap">
-        ${debtors.length ? `<table><tbody>
-          ${debtors.map(c => `<tr>
-            <td><div class="cell-user">
-              <div class="avatar">${esc(initials(c.name))}</div>
-              <div><b>${esc(c.name)}</b><small>${esc(c.phone || '')}</small></div>
-            </div></td>
-            <td class="amount pos" style="text-align:left">${money(c.bal)}</td>
-          </tr>`).join('')}
-        </tbody></table>` : `<div class="empty"><span class="e-ico">✅</span>لا توجد ديون مستحقة</div>`}
+        ${debtors.length ? `<table><tbody>${debtors.map(c => `<tr>
+          <td><div class="cell-user"><div class="avatar">${esc(initials(c.name))}</div>
+            <div><b>${esc(c.name)}</b><small>${esc(c.phone||'')}</small></div></div></td>
+          <td class="amount pos" style="text-align:left">${money(c.bal)}</td>
+        </tr>`).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">✅</span>لا ديون</div>`}
       </div>
     </div>
-
     <div class="card">
-      <div class="card-head">
-        <h3>آخر الحركات</h3>
-        <button class="link-btn" onclick="setView('transactions')">عرض الكل</button>
-      </div>
+      <div class="card-head"><h3>آخر الحركات</h3>
+        <button class="link-btn" onclick="setView('transactions')">الكل</button></div>
       <div class="table-wrap">
-        ${recent.length ? `<table><tbody>
-          ${recent.map(t => {
-            const c = customerById(t.customerId);
-            return `<tr>
-              <td>
-                <span class="pill ${t.type}">${t.type === 'debt' ? 'دين' : 'دفعة'}</span>
-                <div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(c ? c.name : 'محذوف')} • ${fmtDate(t.date)}</div>
-              </td>
-              <td class="amount ${t.type === 'debt' ? 'pos' : 'neg'}" style="text-align:left">
-                ${t.type === 'debt' ? '+' : '−'}${money(t.amount)}
-              </td>
-            </tr>`;
-          }).join('')}
-        </tbody></table>` : `<div class="empty"><span class="e-ico">📭</span>لا توجد حركات</div>`}
+        ${recent.length ? `<table><tbody>${recent.map(t2 => {
+          const c = customerById(t2.customerId);
+          return `<tr>
+            <td><span class="pill ${t2.type}">${t2.type==='debt'?'دين':'دفعة'}</span>
+              <div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(c?c.name:'محذوف')} • ${fmtDate(t2.date)}</div></td>
+            <td class="amount ${t2.type==='debt'?'pos':'neg'}" style="text-align:left">${t2.type==='debt'?'+':'−'}${money(t2.amount)}</td>
+          </tr>`;
+        }).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">📭</span>لا حركات</div>`}
       </div>
     </div>`;
 }
 
-/* ─── العملاء ─── */
 let custQuery = '';
 function renderCustomers() {
   $('#topActions').innerHTML = `<button class="btn primary sm" onclick="openCustomerModal()">+ عميل</button>`;
   const q = custQuery.toLowerCase();
-  const list = state.data.customers.map(c => ({ ...c, bal: balanceOf(c.id) }))
-    .filter(c => !q || c.name.toLowerCase().includes(q) || (c.phone || '').includes(q))
-    .sort((a, b) => b.bal - a.bal);
+  const list = state.data.customers.map(c => ({...c, bal: balanceOf(c.id)}))
+    .filter(c => !q || c.name.toLowerCase().includes(q) || (c.phone||'').includes(q))
+    .sort((a,b) => b.bal - a.bal);
 
   $('#viewRoot').innerHTML = `
-    <div class="search" style="margin-bottom:12px">
-      <span class="muted">🔍</span>
-      <input id="custSearch" placeholder="ابحث بالاسم أو الهاتف..." value="${esc(custQuery)}">
-    </div>
-    <div class="card">
-      <div class="table-wrap">
-        ${list.length ? `<table>
-          <thead><tr><th>العميل</th><th>الرصيد</th><th></th></tr></thead>
-          <tbody>
-            ${list.map(c => {
-              const bc = c.bal > 0.001 ? 'pos' : (c.bal < -0.001 ? 'neg' : '');
-              const tag = c.bal > 0.001 ? 'عليه' : (c.bal < -0.001 ? 'له' : '');
-              return `<tr>
-                <td><div class="cell-user">
-                  <div class="avatar">${esc(initials(c.name))}</div>
-                  <div style="min-width:0">
-                    <b>${esc(c.name)}</b>
-                    <small>${esc(c.phone || 'بدون رقم')}</small>
-                  </div>
-                </div></td>
-                <td class="amount ${bc}">${money(Math.abs(c.bal))}<br>
-                  <small class="muted" style="font-weight:400;font-size:11px">${tag}</small>
-                </td>
-                <td>
-                  <div class="actions">
-                    <button class="icon-btn" onclick="openStatement('${c.id}')" title="كشف">📄</button>
-                    <button class="icon-btn" onclick="openCustomerModal('${c.id}')" title="تعديل">✏️</button>
-                    <button class="icon-btn" onclick="deleteCustomer('${c.id}')" title="حذف">🗑️</button>
-                  </div>
-                </td>
-              </tr>`;
-            }).join('')}
-          </tbody></table>` : `<div class="empty">
-            <span class="e-ico">👥</span>لا يوجد عملاء
-            <br><br>
-            <button class="btn primary sm" onclick="openCustomerModal()">إضافة أول عميل</button>
-          </div>`}
-      </div>
-    </div>`;
+    <div class="search" style="margin-bottom:12px"><span class="muted">🔍</span>
+      <input id="custSearch" placeholder="ابحث..." value="${esc(custQuery)}"></div>
+    <div class="card"><div class="table-wrap">
+      ${list.length ? `<table><thead><tr><th>العميل</th><th>الرصيد</th><th></th></tr></thead>
+        <tbody>${list.map(c => {
+          const bc = c.bal > 0.001 ? 'pos' : (c.bal < -0.001 ? 'neg' : '');
+          const tag = c.bal > 0.001 ? 'عليه' : (c.bal < -0.001 ? 'له' : '');
+          return `<tr>
+            <td><div class="cell-user"><div class="avatar">${esc(initials(c.name))}</div>
+              <div style="min-width:0"><b>${esc(c.name)}</b><small>${esc(c.phone||'بدون رقم')}</small></div></div></td>
+            <td class="amount ${bc}">${money(Math.abs(c.bal))}<br>
+              <small class="muted" style="font-size:11px;font-weight:400">${tag}</small></td>
+            <td><div class="actions">
+              <button class="icon-btn" onclick="openStatement('${c.id}')">📄</button>
+              <button class="icon-btn" onclick="openCustomerModal('${c.id}')">✏️</button>
+              <button class="icon-btn" onclick="deleteCustomer('${c.id}')">🗑️</button>
+            </div></td>
+          </tr>`;
+        }).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">👥</span>لا عملاء<br><br>
+          <button class="btn primary sm" onclick="openCustomerModal()">إضافة أول عميل</button></div>`}
+    </div></div>`;
 
   const inp = $('#custSearch');
   if (inp) {
-    let t;
+    let tt;
     inp.addEventListener('input', e => {
-      clearTimeout(t);
+      clearTimeout(tt);
       const v = e.target.value;
-      t = setTimeout(() => {
-        custQuery = v;
-        renderCustomers();
+      tt = setTimeout(() => {
+        custQuery = v; renderCustomers();
         const ni = $('#custSearch'); if (ni) { ni.focus(); ni.setSelectionRange(v.length, v.length); }
       }, 220);
     });
@@ -1068,27 +754,22 @@ function openCustomerModal(id) {
     title: c ? 'تعديل عميل' : 'عميل جديد',
     body: `
       <label>الاسم *</label>
-      <input id="cName" value="${esc(c?.name || '')}" placeholder="اسم العميل">
+      <input id="cName" value="${esc(c?.name||'')}">
       <label>رقم الهاتف</label>
-      <input id="cPhone" type="tel" value="${esc(c?.phone || '')}" placeholder="05xxxxxxxx" inputmode="tel">
+      <input id="cPhone" type="tel" value="${esc(c?.phone||'')}" inputmode="tel">
       <label>ملاحظات</label>
-      <textarea id="cNote" rows="2" placeholder="اختياري...">${esc(c?.note || '')}</textarea>`,
-    onSubmit: form => {
+      <textarea id="cNote" rows="2">${esc(c?.note||'')}</textarea>`,
+    onSubmit: async form => {
       const name = $('#cName', form).value.trim();
       if (name.length < 2) { toast('الاسم قصير', 'err'); return false; }
       if (c) {
         Object.assign(c, { name, phone: $('#cPhone', form).value.trim(), note: $('#cNote', form).value.trim() });
         toast('تم التحديث');
       } else {
-        state.data.customers.push({
-          id: uid(), name,
-          phone: $('#cPhone', form).value.trim(),
-          note: $('#cNote', form).value.trim(),
-          createdAt: Date.now()
-        });
+        state.data.customers.push({ id: uid(), name, phone: $('#cPhone', form).value.trim(), note: $('#cNote', form).value.trim(), createdAt: Date.now() });
         toast('تمت الإضافة');
       }
-      saveData(); renderCustomers();
+      await saveData(); renderCustomers();
     }
   });
 }
@@ -1098,14 +779,13 @@ function deleteCustomer(id) {
   if (!c) return;
   const n = state.data.transactions.filter(t => t.customerId === id).length;
   openModal({
-    title: 'تأكيد الحذف',
-    body: `<p style="line-height:1.8">حذف العميل <b>${esc(c.name)}</b>؟<br>
-      سيتم حذف <b>${n}</b> حركة مرتبطة. لا يمكن التراجع.</p>`,
+    title: 'حذف العميل',
+    body: `<p style="line-height:1.8">حذف <b>${esc(c.name)}</b>؟<br>سيتم حذف <b>${n}</b> حركة.</p>`,
     submitText: 'حذف', danger: true,
-    onSubmit: () => {
+    onSubmit: async () => {
       state.data.customers = state.data.customers.filter(x => x.id !== id);
       state.data.transactions = state.data.transactions.filter(t => t.customerId !== id);
-      saveData(); renderCustomers(); toast('تم الحذف', 'err');
+      await saveData(); renderCustomers(); toast('تم الحذف', 'err');
     }
   });
 }
@@ -1113,33 +793,26 @@ function deleteCustomer(id) {
 function openStatement(id) {
   const c = customerById(id);
   if (!c) return;
-  const tx = state.data.transactions.filter(t => t.customerId === id)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const tx = state.data.transactions.filter(t => t.customerId === id).sort((a,b) => new Date(a.date) - new Date(b.date));
   let running = 0;
   const rows = tx.map(t => {
     running += t.type === 'debt' ? t.amount : -t.amount;
     return `<tr>
       <td style="white-space:nowrap">${fmtDate(t.date)}</td>
-      <td><span class="pill ${t.type}">${t.type === 'debt' ? 'دين' : 'دفعة'}</span></td>
-      <td class="amount ${t.type === 'debt' ? 'pos' : 'neg'}">${t.type === 'debt' ? '+' : '−'}${money(t.amount)}</td>
+      <td><span class="pill ${t.type}">${t.type==='debt'?'دين':'دفعة'}</span></td>
+      <td class="amount ${t.type==='debt'?'pos':'neg'}">${t.type==='debt'?'+':'−'}${money(t.amount)}</td>
       <td class="amount">${money(running)}</td>
     </tr>`;
   }).join('');
 
   openModal({
     title: 'كشف — ' + c.name,
-    wide: true,
     body: `
       <div class="grid stats" style="margin-bottom:14px">
-        <div class="stat ${running > 0 ? 'r' : 'g'}">
-          <div class="lbl">الرصيد الحالي</div>
+        <div class="stat ${running>0?'r':'g'}"><div class="lbl">الرصيد</div>
           <div class="val">${money(Math.abs(running))}</div>
-          <div class="sub">${running > 0 ? 'عليه' : running < 0 ? 'له' : 'مسدَّد'}</div>
-        </div>
-        <div class="stat">
-          <div class="lbl">عدد الحركات</div>
-          <div class="val">${tx.length}</div>
-        </div>
+          <div class="sub">${running>0?'عليه':running<0?'له':'مسدَّد'}</div></div>
+        <div class="stat"><div class="lbl">الحركات</div><div class="val">${tx.length}</div></div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button type="button" class="btn primary sm" style="flex:1" onclick="closeAllModals();openTxModal('debt','${c.id}')">+ دين</button>
@@ -1147,101 +820,81 @@ function openStatement(id) {
       </div>
       <div class="table-wrap" style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
         ${tx.length ? `<table><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>الرصيد</th></tr></thead>
-          <tbody>${rows}</tbody></table>`
-          : `<div class="empty"><span class="e-ico">📭</span>لا حركات</div>`}
+          <tbody>${rows}</tbody></table>` : `<div class="empty">لا حركات</div>`}
       </div>`,
-    submitText: 'إغلاق',
-    onSubmit: () => {}
+    submitText: 'إغلاق'
   });
 }
 
-/* ─── الحركات ─── */
 let txFilter = 'all';
 function renderTransactions() {
   $('#topActions').innerHTML = `
     <button class="btn primary sm" onclick="openTxModal('debt')">+ دين</button>
     <button class="btn success sm" onclick="openTxModal('payment')">دفعة</button>`;
 
-  let tx = [...state.data.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+  let tx = [...state.data.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
   if (txFilter !== 'all') tx = tx.filter(t => t.type === txFilter);
 
   $('#viewRoot').innerHTML = `
     <div class="filter-bar" style="margin-bottom:12px">
-      ${[['all','الكل'],['debt','ديون'],['payment','دفعات']].map(([k, l]) =>
-        `<button class="btn sm ${txFilter === k ? 'primary' : 'ghost'}" onclick="txFilter='${k}';renderTransactions()">${l}</button>`
+      ${[['all','الكل'],['debt','ديون'],['payment','دفعات']].map(([k,l]) =>
+        `<button class="btn sm ${txFilter===k?'primary':'ghost'}" onclick="txFilter='${k}';renderTransactions()">${l}</button>`
       ).join('')}
     </div>
-    <div class="card">
-      <div class="table-wrap">
-        ${tx.length ? `<table>
-          <thead><tr><th>التاريخ</th><th>العميل</th><th>النوع</th><th>المبلغ</th><th></th></tr></thead>
-          <tbody>
-            ${tx.map(t => {
-              const c = customerById(t.customerId);
-              return `<tr>
-                <td style="white-space:nowrap;font-size:12px">${fmtDate(t.date)}</td>
-                <td><b style="font-size:13px">${esc(c ? c.name : 'محذوف')}</b></td>
-                <td><span class="pill ${t.type}">${t.type === 'debt' ? 'دين' : 'دفعة'}</span></td>
-                <td class="amount ${t.type === 'debt' ? 'pos' : 'neg'}">${t.type === 'debt' ? '+' : '−'}${money(t.amount)}</td>
-                <td><div class="actions">
-                  <button class="icon-btn" onclick="deleteTx('${t.id}')">🗑️</button>
-                </div></td>
-              </tr>`;
-            }).join('')}
-          </tbody></table>` : `<div class="empty"><span class="e-ico">📭</span>لا حركات</div>`}
-      </div>
-    </div>`;
+    <div class="card"><div class="table-wrap">
+      ${tx.length ? `<table><thead><tr><th>التاريخ</th><th>العميل</th><th>النوع</th><th>المبلغ</th><th></th></tr></thead>
+        <tbody>${tx.map(t => {
+          const c = customerById(t.customerId);
+          return `<tr>
+            <td style="white-space:nowrap;font-size:12px">${fmtDate(t.date)}</td>
+            <td><b style="font-size:13px">${esc(c?c.name:'محذوف')}</b></td>
+            <td><span class="pill ${t.type}">${t.type==='debt'?'دين':'دفعة'}</span></td>
+            <td class="amount ${t.type==='debt'?'pos':'neg'}">${t.type==='debt'?'+':'−'}${money(t.amount)}</td>
+            <td><div class="actions"><button class="icon-btn" onclick="deleteTx('${t.id}')">🗑️</button></div></td>
+          </tr>`;
+        }).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">📭</span>لا حركات</div>`}
+    </div></div>`;
 }
 
 function deleteTx(id) {
   openModal({
-    title: 'حذف الحركة',
-    body: '<p>هل تريد حذف هذه الحركة؟</p>',
+    title: 'حذف', body: '<p>حذف هذه الحركة؟</p>',
     submitText: 'حذف', danger: true,
-    onSubmit: () => {
+    onSubmit: async () => {
       const t = state.data.transactions.find(x => x.id === id);
       if (t?.items?.length) t.items.forEach(it => {
         const item = state.data.items.find(i => i.id === it.itemId);
-        if (item) item.stock = (Number(item.stock) || 0) + Number(it.qty);
+        if (item) item.stock = (Number(item.stock)||0) + Number(it.qty);
       });
       state.data.transactions = state.data.transactions.filter(x => x.id !== id);
-      saveData(); renderTransactions(); toast('تم الحذف', 'err');
+      await saveData(); renderTransactions(); toast('تم الحذف', 'err');
     }
   });
 }
 
 function openTxModal(type, customerId) {
-  if (!state.data.customers.length) {
-    toast('أضف عميلاً أولاً', 'err');
-    return openCustomerModal();
-  }
+  if (!state.data.customers.length) { toast('أضف عميلاً أولاً', 'err'); return openCustomerModal(); }
   const isDebt = type === 'debt';
-  const custOpts = state.data.customers
-    .map(c => `<option value="${c.id}" ${c.id === customerId ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
-  const itemOpts = state.data.items
-    .map(i => `<option value="${i.id}" data-price="${i.price}">${esc(i.name)}</option>`).join('');
+  const custOpts = state.data.customers.map(c => `<option value="${c.id}" ${c.id===customerId?'selected':''}>${esc(c.name)}</option>`).join('');
+  const itemOpts = state.data.items.map(i => `<option value="${i.id}" data-price="${i.price}">${esc(i.name)}</option>`).join('');
 
   openModal({
     title: isDebt ? 'تسجيل دين' : 'تسجيل دفعة',
-    wide: isDebt,
     body: `
       <label>العميل *</label>
       <select id="txCustomer">${custOpts}</select>
       <label>التاريخ</label>
       <input type="date" id="txDate" value="${todayISO()}">
       ${isDebt ? `
-      <div class="row-between">
-        <span>المواد (اختياري)</span>
-        <button type="button" class="btn ghost sm" id="addLineBtn" ${state.data.items.length ? '' : 'disabled'}>+ إضافة</button>
-      </div>
-      ${!state.data.items.length ? '<p class="muted" style="font-size:12px;margin-bottom:8px">لا توجد مواد في المخزون</p>' : ''}
+      <div class="row-between"><span>المواد (اختياري)</span>
+        <button type="button" class="btn ghost sm" id="addLineBtn" ${state.data.items.length?'':'disabled'}>+ إضافة</button></div>
       <div id="lines"></div>` : ''}
       <label>المبلغ * (${cur()})</label>
-      <input type="number" id="txAmount" step="0.01" min="0" placeholder="0.00" inputmode="decimal">
-      <label>البيان / ملاحظة</label>
-      <input id="txNote" placeholder="${isDebt ? 'بضاعة متنوعة' : 'دفعة نقدية'}">`,
+      <input type="number" id="txAmount" step="0.01" min="0" inputmode="decimal">
+      <label>ملاحظة</label>
+      <input id="txNote">`,
     submitText: isDebt ? 'حفظ الدين' : 'حفظ الدفعة',
-    onSubmit: form => {
+    onSubmit: async form => {
       const amount = parseFloat($('#txAmount', form).value);
       if (!amount || amount <= 0) { toast('أدخل مبلغاً صحيحاً', 'err'); return false; }
       const items = [];
@@ -1251,19 +904,16 @@ function openTxModal(type, customerId) {
         const price = parseFloat($('[data-price]', line).value) || 0;
         if (qty > 0) {
           const item = state.data.items.find(i => i.id === sel.value);
-          items.push({ itemId: sel.value, name: item?.name || '', qty, price, unit: item?.unit || '' });
-          if (item) item.stock = (Number(item.stock) || 0) - qty;
+          items.push({ itemId: sel.value, name: item?.name||'', qty, price, unit: item?.unit||'' });
+          if (item) item.stock = (Number(item.stock)||0) - qty;
         }
       });
       state.data.transactions.push({
-        id: uid(),
-        customerId: $('#txCustomer', form).value,
-        type, amount,
+        id: uid(), customerId: $('#txCustomer', form).value, type, amount,
         date: new Date($('#txDate', form).value || todayISO()).getTime(),
-        note: $('#txNote', form).value.trim(),
-        items, createdAt: Date.now()
+        note: $('#txNote', form).value.trim(), items, createdAt: Date.now()
       });
-      saveData();
+      await saveData();
       toast(isDebt ? 'تم تسجيل الدين' : 'تم تسجيل الدفعة');
       renderView();
     },
@@ -1273,24 +923,20 @@ function openTxModal(type, customerId) {
       const recalc = () => {
         let total = 0;
         $$('[data-line]', form).forEach(l => {
-          const q = parseFloat($('[data-qty]', l).value) || 0;
-          const p = parseFloat($('[data-price]', l).value) || 0;
-          total += q * p;
+          total += (parseFloat($('[data-qty]', l).value)||0) * (parseFloat($('[data-price]', l).value)||0);
         });
         if (total > 0) $('#txAmount', form).value = total.toFixed(2);
       };
       const addLine = () => {
         const div = document.createElement('div');
-        div.className = 'line';
-        div.setAttribute('data-line', '');
-        div.innerHTML = `
-          <select data-item>${itemOpts}</select>
+        div.className = 'line'; div.setAttribute('data-line', '');
+        div.innerHTML = `<select data-item>${itemOpts}</select>
           <input type="number" data-qty value="1" min="0" inputmode="decimal" placeholder="كمية">
-          <input type="number" data-price value="${state.data.items[0]?.price || 0}" min="0" inputmode="decimal" placeholder="سعر">
+          <input type="number" data-price value="${state.data.items[0]?.price||0}" min="0" inputmode="decimal" placeholder="سعر">
           <button type="button" class="icon-btn" data-remove>×</button>`;
         linesEl.appendChild(div);
         const sel = $('[data-item]', div), qtyI = $('[data-qty]', div), prI = $('[data-price]', div);
-        sel.addEventListener('change', () => { prI.value = sel.selectedOptions[0]?.dataset.price || 0; recalc(); });
+        sel.addEventListener('change', () => { prI.value = sel.selectedOptions[0]?.dataset.price||0; recalc(); });
         qtyI.addEventListener('input', recalc);
         prI.addEventListener('input', recalc);
         $('[data-remove]', div).addEventListener('click', () => { div.remove(); recalc(); });
@@ -1302,7 +948,6 @@ function openTxModal(type, customerId) {
   });
 }
 
-/* ─── الأرباح والخسائر ─── */
 let ledgerFilter = 'today';
 function renderLedger() {
   $('#topActions').innerHTML = `
@@ -1313,66 +958,37 @@ function renderLedger() {
   const now = Date.now();
   let filtered = all;
   if (ledgerFilter === 'today') filtered = all.filter(e => isToday(e.date));
-  else if (ledgerFilter === 'week')  filtered = all.filter(e => e.date >= now - 7 * DAY);
-  else if (ledgerFilter === 'month') filtered = all.filter(e => e.date >= now - 30 * DAY);
-  filtered = filtered.sort((a, b) => b.date - a.date);
+  else if (ledgerFilter === 'week') filtered = all.filter(e => e.date >= now - 7*DAY);
+  else if (ledgerFilter === 'month') filtered = all.filter(e => e.date >= now - 30*DAY);
+  filtered = filtered.sort((a,b) => b.date - a.date);
 
   const st = ledgerStats(filtered);
   const stAll = ledgerStats(all);
-  const labels = { today: 'اليوم', week: '7 أيام', month: '30 يوم', all: 'الكل' };
 
   $('#viewRoot').innerHTML = `
     <div class="filter-bar" style="margin-bottom:12px">
-      ${[['today','اليوم'],['week','الأسبوع'],['month','الشهر'],['all','الكل']].map(([k, l]) =>
-        `<button class="btn sm ${ledgerFilter === k ? 'primary' : 'ghost'}" onclick="ledgerFilter='${k}';renderLedger()">${l}</button>`
+      ${[['today','اليوم'],['week','الأسبوع'],['month','الشهر'],['all','الكل']].map(([k,l]) =>
+        `<button class="btn sm ${ledgerFilter===k?'primary':'ghost'}" onclick="ledgerFilter='${k}';renderLedger()">${l}</button>`
       ).join('')}
     </div>
-
     <div class="grid stats" style="margin-bottom:14px">
-      <div class="stat g">
-        <div class="lbl">إيرادات (${labels[ledgerFilter]})</div>
-        <div class="val" style="color:var(--green)">${money(st.inc)}</div>
-      </div>
-      <div class="stat r">
-        <div class="lbl">مصروفات</div>
-        <div class="val" style="color:var(--red)">${money(st.exp)}</div>
-      </div>
-      <div class="stat ${st.net > 0 ? 'g' : st.net < 0 ? 'r' : 'a'}">
-        <div class="lbl">${st.net > 0 ? 'ربح' : st.net < 0 ? 'خسارة' : 'الصافي'}</div>
-        <div class="val" style="color:${st.net > 0 ? 'var(--green)' : st.net < 0 ? 'var(--red)' : 'var(--muted)'}">
-          ${money(Math.abs(st.net))}
-        </div>
-      </div>
-      <div class="stat">
-        <div class="lbl">الصافي الكلي</div>
-        <div class="val" style="color:${stAll.net > 0 ? 'var(--green)' : stAll.net < 0 ? 'var(--red)' : 'var(--muted)'}">
-          ${money(Math.abs(stAll.net))}
-        </div>
-      </div>
+      <div class="stat g"><div class="lbl">إيرادات</div><div class="val" style="color:var(--green)">${money(st.inc)}</div></div>
+      <div class="stat r"><div class="lbl">مصروفات</div><div class="val" style="color:var(--red)">${money(st.exp)}</div></div>
+      <div class="stat ${st.net>0?'g':st.net<0?'r':'a'}"><div class="lbl">${st.net>0?'ربح':st.net<0?'خسارة':'الصافي'}</div>
+        <div class="val" style="color:${st.net>0?'var(--green)':st.net<0?'var(--red)':'var(--muted)'}">${money(Math.abs(st.net))}</div></div>
+      <div class="stat"><div class="lbl">الصافي الكلي</div>
+        <div class="val" style="color:${stAll.net>0?'var(--green)':stAll.net<0?'var(--red)':'var(--muted)'}">${money(Math.abs(stAll.net))}</div></div>
     </div>
-
-    <div class="card">
-      <div class="table-wrap">
-        ${filtered.length ? `<table>
-          <thead><tr><th>التاريخ</th><th>النوع</th><th>البيان</th><th>المبلغ</th><th></th></tr></thead>
-          <tbody>
-            ${filtered.map(e => `<tr>
-              <td style="white-space:nowrap;font-size:12px">${fmtDate(e.date)}</td>
-              <td><span class="pill ${e.type === 'income' ? 'inc' : 'exp'}">${e.type === 'income' ? 'إيراد' : 'مصروف'}</span></td>
-              <td style="font-size:13px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.note || '—')}</td>
-              <td class="amount ${e.type === 'income' ? 'neg' : 'pos'}">${e.type === 'income' ? '+' : '−'}${money(e.amount)}</td>
-              <td><div class="actions">
-                <button class="icon-btn" onclick="deleteLedger('${e.id}')">🗑️</button>
-              </div></td>
-            </tr>`).join('')}
-          </tbody></table>` : `<div class="empty">
-            <span class="e-ico">💹</span>لا حركات في هذه الفترة
-            <br><br>
-            <button class="btn success sm" onclick="openLedgerModal('income')">+ إيراد</button>
-            <button class="btn danger sm" onclick="openLedgerModal('expense')">- مصروف</button>
-          </div>`}
-      </div>
-    </div>`;
+    <div class="card"><div class="table-wrap">
+      ${filtered.length ? `<table><thead><tr><th>التاريخ</th><th>النوع</th><th>البيان</th><th>المبلغ</th><th></th></tr></thead>
+        <tbody>${filtered.map(e => `<tr>
+          <td style="white-space:nowrap;font-size:12px">${fmtDate(e.date)}</td>
+          <td><span class="pill ${e.type==='income'?'inc':'exp'}">${e.type==='income'?'إيراد':'مصروف'}</span></td>
+          <td style="font-size:13px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.note||'—')}</td>
+          <td class="amount ${e.type==='income'?'neg':'pos'}">${e.type==='income'?'+':'−'}${money(e.amount)}</td>
+          <td><div class="actions"><button class="icon-btn" onclick="deleteLedger('${e.id}')">🗑️</button></div></td>
+        </tr>`).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">💹</span>لا حركات</div>`}
+    </div></div>`;
 }
 
 function openLedgerModal(type) {
@@ -1381,24 +997,23 @@ function openLedgerModal(type) {
     title: isIncome ? 'تسجيل إيراد' : 'تسجيل مصروف',
     body: `
       <label>المبلغ * (${cur()})</label>
-      <input type="number" id="lgAmount" step="0.01" min="0" placeholder="0.00" inputmode="decimal">
+      <input type="number" id="lgAmount" step="0.01" min="0" inputmode="decimal">
       <label>التاريخ</label>
       <input type="date" id="lgDate" value="${todayISO()}">
       <label>البيان</label>
-      <input id="lgNote" placeholder="${isIncome ? 'مثال: مبيعات اليوم' : 'مثال: فاتورة كهرباء'}">`,
-    submitText: isIncome ? 'حفظ الإيراد' : 'حفظ المصروف',
+      <input id="lgNote">`,
+    submitText: 'حفظ',
     danger: !isIncome,
-    onSubmit: form => {
+    onSubmit: async form => {
       const amount = parseFloat($('#lgAmount', form).value);
-      if (!amount || amount <= 0) { toast('أدخل مبلغاً صحيحاً', 'err'); return false; }
+      if (!amount || amount <= 0) { toast('أدخل مبلغاً', 'err'); return false; }
       state.data.ledger = state.data.ledger || [];
       state.data.ledger.push({
         id: uid(), type, amount,
         date: new Date($('#lgDate', form).value || todayISO()).getTime(),
-        note: $('#lgNote', form).value.trim(),
-        createdAt: Date.now()
+        note: $('#lgNote', form).value.trim(), createdAt: Date.now()
       });
-      saveData();
+      await saveData();
       toast(isIncome ? 'تم تسجيل الإيراد' : 'تم تسجيل المصروف');
       renderLedger();
     }
@@ -1407,45 +1022,32 @@ function openLedgerModal(type) {
 
 function deleteLedger(id) {
   openModal({
-    title: 'حذف الحركة',
-    body: '<p>هل تريد حذف هذه الحركة؟</p>',
+    title: 'حذف', body: '<p>حذف هذه الحركة؟</p>',
     submitText: 'حذف', danger: true,
-    onSubmit: () => {
+    onSubmit: async () => {
       state.data.ledger = state.data.ledger.filter(x => x.id !== id);
-      saveData(); renderLedger(); toast('تم الحذف', 'err');
+      await saveData(); renderLedger(); toast('تم الحذف', 'err');
     }
   });
 }
 
-/* ─── المواد ─── */
 function renderItems() {
   $('#topActions').innerHTML = `<button class="btn primary sm" onclick="openItemModal()">+ مادة</button>`;
-  const items = state.data.items;
   $('#viewRoot').innerHTML = `
-    <div class="card">
-      <div class="table-wrap">
-        ${items.length ? `<table>
-          <thead><tr><th>المادة</th><th>السعر</th><th>المخزون</th><th></th></tr></thead>
-          <tbody>
-            ${items.map(i => `<tr>
-              <td>
-                <b style="font-size:13.5px">${esc(i.name)}</b>
-                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${esc(i.unit || 'بدون وحدة')}</div>
-              </td>
-              <td class="amount">${money(i.price)}</td>
-              <td><span class="pill ${Number(i.stock) > 0 ? 'pay' : 'debt'}">${Number(i.stock) || 0} ${esc(i.unit || '')}</span></td>
-              <td><div class="actions">
-                <button class="icon-btn" onclick="openItemModal('${i.id}')">✏️</button>
-                <button class="icon-btn" onclick="deleteItem('${i.id}')">🗑️</button>
-              </div></td>
-            </tr>`).join('')}
-          </tbody></table>` : `<div class="empty">
-            <span class="e-ico">📦</span>لا توجد مواد
-            <br><br>
-            <button class="btn primary sm" onclick="openItemModal()">إضافة أول مادة</button>
-          </div>`}
-      </div>
-    </div>`;
+    <div class="card"><div class="table-wrap">
+      ${state.data.items.length ? `<table><thead><tr><th>المادة</th><th>السعر</th><th>المخزون</th><th></th></tr></thead>
+        <tbody>${state.data.items.map(i => `<tr>
+          <td><b style="font-size:13.5px">${esc(i.name)}</b>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${esc(i.unit||'بدون وحدة')}</div></td>
+          <td class="amount">${money(i.price)}</td>
+          <td><span class="pill ${Number(i.stock)>0?'pay':'debt'}">${Number(i.stock)||0} ${esc(i.unit||'')}</span></td>
+          <td><div class="actions">
+            <button class="icon-btn" onclick="openItemModal('${i.id}')">✏️</button>
+            <button class="icon-btn" onclick="deleteItem('${i.id}')">🗑️</button>
+          </div></td>
+        </tr>`).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">📦</span>لا مواد<br><br>
+          <button class="btn primary sm" onclick="openItemModal()">إضافة أول مادة</button></div>`}
+    </div></div>`;
 }
 
 function openItemModal(id) {
@@ -1453,88 +1055,61 @@ function openItemModal(id) {
   openModal({
     title: it ? 'تعديل مادة' : 'مادة جديدة',
     body: `
-      <label>اسم المادة *</label>
-      <input id="iName" value="${esc(it?.name || '')}" placeholder="مثال: أسمنت">
+      <label>الاسم *</label>
+      <input id="iName" value="${esc(it?.name||'')}">
       <label>الوحدة</label>
-      <input id="iUnit" value="${esc(it?.unit || '')}" placeholder="كيس / كرتون / قطعة">
-      <label>سعر الوحدة (${cur()})</label>
-      <input id="iPrice" type="number" step="0.01" min="0" value="${it?.price ?? ''}" placeholder="0.00" inputmode="decimal">
-      <label>الكمية في المخزون</label>
-      <input id="iStock" type="number" step="0.01" value="${it?.stock ?? 0}" placeholder="0" inputmode="decimal">`,
-    onSubmit: form => {
+      <input id="iUnit" value="${esc(it?.unit||'')}" placeholder="كيس / كرتون / قطعة">
+      <label>السعر (${cur()})</label>
+      <input id="iPrice" type="number" step="0.01" min="0" value="${it?.price??''}" inputmode="decimal">
+      <label>المخزون</label>
+      <input id="iStock" type="number" step="0.01" value="${it?.stock??0}" inputmode="decimal">`,
+    onSubmit: async form => {
       const name = $('#iName', form).value.trim();
-      if (name.length < 2) { toast('اسم المادة قصير', 'err'); return false; }
-      const payload = {
-        name,
-        unit: $('#iUnit', form).value.trim(),
-        price: parseFloat($('#iPrice', form).value) || 0,
-        stock: parseFloat($('#iStock', form).value) || 0
-      };
-      if (it) { Object.assign(it, payload); toast('تم التحديث'); }
-      else { state.data.items.push({ id: uid(), ...payload, createdAt: Date.now() }); toast('تمت الإضافة'); }
-      saveData(); renderItems();
+      if (name.length < 2) { toast('اسم قصير', 'err'); return false; }
+      const p = { name, unit: $('#iUnit', form).value.trim(), price: parseFloat($('#iPrice', form).value)||0, stock: parseFloat($('#iStock', form).value)||0 };
+      if (it) { Object.assign(it, p); toast('تم التحديث'); }
+      else { state.data.items.push({ id: uid(), ...p, createdAt: Date.now() }); toast('تمت الإضافة'); }
+      await saveData(); renderItems();
     }
   });
 }
 
 function deleteItem(id) {
   openModal({
-    title: 'حذف المادة',
-    body: '<p>هل تريد حذف هذه المادة؟</p>',
+    title: 'حذف', body: '<p>حذف هذه المادة؟</p>',
     submitText: 'حذف', danger: true,
-    onSubmit: () => {
+    onSubmit: async () => {
       state.data.items = state.data.items.filter(x => x.id !== id);
-      saveData(); renderItems(); toast('تم الحذف', 'err');
+      await saveData(); renderItems(); toast('تم الحذف', 'err');
     }
   });
 }
 
-/* ─── الاشتراك (واتساب فقط) ─── */
 function plansHTML() {
   return `
     <div class="wa-box">
       <h3>للاشتراك تواصل معنا على واتساب</h3>
-      <p>اضغط على الرقم أو الزر لفتح المحادثة مباشرة</p>
-      <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('مرحباً، أريد الاشتراك في تطبيق دفتر الحسابات')}"
-         target="_blank" rel="noopener" style="text-decoration:none">
+      <p>اضغط الرقم أو الزر لفتح المحادثة مباشرة</p>
+      <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('مرحباً، أريد الاشتراك في تطبيق دفتر الحسابات')}" target="_blank" style="text-decoration:none">
         <div class="num">${WHATSAPP_DISPLAY}</div>
-      </a>
-      <br>
-      <a class="btn full" href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('مرحباً، أريد الاشتراك في تطبيق دفتر الحسابات')}"
-         target="_blank" rel="noopener" style="text-decoration:none">
-        فتح واتساب
-      </a>
+      </a><br>
+      <a class="btn full" href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('مرحباً، أريد الاشتراك')}" target="_blank" style="text-decoration:none">فتح واتساب</a>
     </div>
-
     <div class="plans">
-      ${PLANS.map(p => `
-        <div class="plan ${p.best ? 'best' : ''}">
-          ${p.best ? '<div class="tag">الأكثر توفيراً</div>' : ''}
-          <h4>${p.name}</h4>
-          <div class="price">$${p.price}<small>/ ${p.days} يوم</small></div>
-          ${p.save ? `<div class="save">${p.save}</div>` : ''}
-          <ul>
-            <li>عملاء وحركات غير محدودة</li>
-            <li>إدارة المواد والمخزون</li>
-            <li>دفتر أرباح وخسائر</li>
-            <li>كشوف حساب مفصّلة</li>
-            <li>تصدير البيانات</li>
-          </ul>
-          <button class="btn wa" onclick="subscribeViaWhatsApp('${p.id}')">اشترك عبر واتساب</button>
-        </div>`).join('')}
+      ${PLANS.map(p => `<div class="plan ${p.best?'best':''}">
+        ${p.best?'<div class="tag">الأكثر توفيراً</div>':''}
+        <h4>${p.name}</h4>
+        <div class="price">$${p.price}<small>/ ${p.days} يوم</small></div>
+        ${p.save?`<div class="save">${p.save}</div>`:''}
+        <ul><li>عملاء وحركات بلا حدود</li><li>إدارة المواد والمخزون</li><li>دفتر أرباح وخسائر</li><li>كشوف حساب مفصّلة</li><li>تصدير البيانات</li></ul>
+        <button class="btn wa" onclick="subscribeViaWhatsApp('${p.id}')">اشترك عبر واتساب</button>
+      </div>`).join('')}
     </div>`;
 }
 
 function subscribeViaWhatsApp(planId) {
   const p = planById(planId);
-  const msg =
-    `مرحباً،\n` +
-    `أريد الاشتراك في تطبيق دفتر الحسابات\n\n` +
-    `الخطة: ${p.name}\n` +
-    `المدة: ${p.days} يوم\n` +
-    `السعر: $${p.price}\n\n` +
-    `الاسم: ${state.user?.name || ''}\n` +
-    `رقمي: ${state.user?.phone || ''}`;
+  const msg = `مرحباً،\nأريد الاشتراك في تطبيق دفتر الحسابات\n\nالخطة: ${p.name}\nالمدة: ${p.days} يوم\nالسعر: $${p.price}\n\nالاسم: ${state.user?.name||''}\nرقمي: ${state.user?.phone||''}`;
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
   toast('تم فتح واتساب');
 }
@@ -1546,178 +1121,134 @@ function renderSubscription() {
       <div class="card-body">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <b>حالة الاشتراك</b>
-          <span class="pill ${si.active ? 'pay' : 'debt'}">${si.active ? 'نشط' : 'منتهي'}</span>
+          <span class="pill ${si.active?'pay':'debt'}">${si.active?'نشط':'منتهي'}</span>
         </div>
         <div class="grid stats">
           <div class="stat"><div class="lbl">الخطة</div><div class="val" style="font-size:16px">${si.planName}</div></div>
-          <div class="stat ${si.daysLeft <= 7 ? 'r' : 'g'}"><div class="lbl">المتبقي</div><div class="val">${si.daysLeft} يوم</div></div>
+          <div class="stat ${si.daysLeft<=7?'r':'g'}"><div class="lbl">المتبقي</div><div class="val">${si.daysLeft} يوم</div></div>
           <div class="stat"><div class="lbl">الانتهاء</div><div class="val" style="font-size:16px">${fmtDate(si.endDate)}</div></div>
         </div>
       </div>
     </div>
-
-    <h3 style="font-size:15px;margin-bottom:12px">اختر خطة الاشتراك</h3>
+    <h3 style="font-size:15px;margin-bottom:12px">اختر خطة</h3>
     ${plansHTML()}
-
     <div class="card" style="margin-top:18px">
       <div class="card-head"><h3>لديك كود تفعيل؟</h3></div>
       <div class="card-body">
-        <p class="muted" style="font-size:13px;margin-bottom:12px">
-          أدخل كود التفعيل الذي حصلت عليه من فريق الدعم
-        </p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="codeInput" placeholder="LED-XXXX-XXXX"
-            style="flex:1;min-width:160px;direction:ltr;text-align:center;font-weight:700;letter-spacing:1px">
-          <button class="btn primary" onclick="redeemCode()">تفعيل</button>
+          <input id="codeInput" placeholder="LED-XXXX-XXXX" style="flex:1;min-width:160px;direction:ltr;text-align:center;font-weight:700;letter-spacing:1px">
+          <button class="btn primary" onclick="redeemCode('codeInput')">تفعيل</button>
         </div>
       </div>
     </div>`;
 }
 
-function redeemCode(inputId) {
-  const id = inputId || 'codeInput';
-  const input = $('#' + id);
-  const code = (input?.value || '').trim().toUpperCase();
+async function redeemCode(inputId) {
+  const code = ($('#'+inputId)?.value || '').trim().toUpperCase();
   if (!code) return toast('أدخل الكود', 'err');
 
-  const codes = STORE.get(K.codes, []);
-  const found = codes.find(c => c.code === code);
-  if (!found)     return toast('كود غير صالح', 'err');
-  if (found.used) return toast('كود مستخدم مسبقاً', 'err');
+  try {
+    const found = await fbGet('codes/' + code);
+    if (!found) return toast('كود غير صالح', 'err');
+    if (found.used) return toast('مستخدم مسبقاً', 'err');
 
-  found.used = true;
-  found.usedBy = state.user.id;
-  found.usedAt = Date.now();
-  STORE.set(K.codes, codes);
+    await fbUpdate('codes/' + code, { used: true, usedBy: state.user.id, usedAt: Date.now() });
 
-  extendSubscription(state.user.id, found.plan, found.days);
-  toast('تم التفعيل بنجاح');
-  setTimeout(() => location.reload(), 900);
+    const now = Date.now();
+    const curEnd = new Date(state.user.subscription?.endDate || 0).getTime();
+    const base = curEnd > now ? curEnd : now;
+    const newSub = {
+      plan: found.plan,
+      startDate: now,
+      endDate: base + found.days * DAY,
+      history: [...(state.user.subscription?.history||[]), { plan: found.plan, days: found.days, at: now }]
+    };
+    await fbUpdate('users/' + state.user.id, { subscription: newSub });
+    toast('تم التفعيل 🎉');
+    setTimeout(() => location.reload(), 900);
+  } catch (e) {
+    console.error(e); toast('خطأ: ' + e.message, 'err');
+  }
 }
 
 function renderLock() {
   const si = subInfo(state.user);
   $('#lockPlans').innerHTML = `
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-body" style="text-align:center">
-        <p style="font-size:14px;line-height:1.8">
-          انتهى اشتراكك بتاريخ <b>${fmtDate(si.endDate)}</b><br>
-          بياناتك محفوظة بالكامل، جدّد الآن للمتابعة
-        </p>
-      </div>
-    </div>
+    <div class="card" style="margin-bottom:16px"><div class="card-body" style="text-align:center">
+      <p style="font-size:14px;line-height:1.8">انتهى اشتراكك بتاريخ <b>${fmtDate(si.endDate)}</b><br>بياناتك محفوظة في السحابة</p>
+    </div></div>
     ${plansHTML()}
     <div class="card" style="margin-top:18px;max-width:520px;margin-inline:auto">
       <div class="card-head"><h3>لديك كود تفعيل؟</h3></div>
       <div class="card-body">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="lockCodeInput" placeholder="LED-XXXX-XXXX"
-            style="flex:1;min-width:160px;direction:ltr;text-align:center;font-weight:700;letter-spacing:1px">
+          <input id="lockCodeInput" placeholder="LED-XXXX-XXXX" style="flex:1;min-width:160px;direction:ltr;text-align:center;font-weight:700;letter-spacing:1px">
           <button class="btn primary" onclick="redeemCode('lockCodeInput')">تفعيل</button>
         </div>
       </div>
     </div>`;
 }
 
-/* ─── الإعدادات ─── */
 function renderSettings() {
   const u = state.user;
   $('#viewRoot').innerHTML = `
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-head"><h3>بيانات الحساب</h3></div>
+    <div class="card" style="margin-bottom:14px"><div class="card-head"><h3>بياناتي</h3></div>
       <div class="card-body">
-        <label>الاسم</label>
-        <input id="sName" value="${esc(u.name)}">
-        <label>رقم الهاتف</label>
-        <input id="sPhone" type="tel" value="${esc(u.phone)}" inputmode="tel">
-        <button class="btn primary full" style="margin-top:16px" onclick="saveProfile()">حفظ التعديلات</button>
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-head"><h3>تغيير كلمة المرور</h3></div>
+        <label>الاسم</label><input id="sName" value="${esc(u.name)}">
+        <label>رقم الهاتف</label><input id="sPhone" type="tel" value="${esc(u.phone)}" inputmode="tel" disabled>
+        <button class="btn primary full" style="margin-top:16px" onclick="saveProfile()">حفظ</button>
+      </div></div>
+    <div class="card" style="margin-bottom:14px"><div class="card-head"><h3>كلمة المرور</h3></div>
       <div class="card-body">
-        <label>كلمة المرور الحالية</label>
-        <input id="sOld" type="password">
-        <label>كلمة المرور الجديدة</label>
-        <input id="sNew" type="password">
+        <label>الحالية</label><input id="sOld" type="password">
+        <label>الجديدة</label><input id="sNew" type="password">
         <button class="btn primary full" style="margin-top:16px" onclick="changePass()">تغيير</button>
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-head"><h3>العملة</h3></div>
+      </div></div>
+    <div class="card" style="margin-bottom:14px"><div class="card-head"><h3>العملة</h3></div>
       <div class="card-body">
-        <label>رمز العملة</label>
         <input id="sCur" value="${esc(cur())}" placeholder="ر.س / $ / ل.س">
         <button class="btn primary full" style="margin-top:16px" onclick="saveCurrency()">حفظ</button>
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-head"><h3>النسخ الاحتياطي</h3></div>
+      </div></div>
+    <div class="card" style="margin-bottom:14px"><div class="card-head"><h3>النسخ الاحتياطي</h3></div>
       <div class="card-body">
         <button class="btn ghost full" onclick="exportData()">تصدير البيانات</button>
-        <button class="btn ghost full" style="margin-top:8px" onclick="document.getElementById('importFile').click()">استيراد البيانات</button>
-        <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-head"><h3>تواصل مع الدعم</h3></div>
+      </div></div>
+    <div class="card" style="margin-bottom:14px"><div class="card-head"><h3>تواصل معنا</h3></div>
       <div class="card-body">
-        <p class="muted" style="font-size:13px;margin-bottom:12px">للاستفسارات والاشتراك</p>
-        <a class="btn wa full" href="https://wa.me/${WHATSAPP_NUMBER}" target="_blank" rel="noopener" style="text-decoration:none">
-          واتساب ${WHATSAPP_DISPLAY}
-        </a>
-      </div>
-    </div>
-
-    <div class="card" style="border-color:rgba(239,68,68,.35)">
-      <div class="card-head"><h3 style="color:var(--red)">منطقة الخطر</h3></div>
+        <a class="btn wa full" href="https://wa.me/${WHATSAPP_NUMBER}" target="_blank" style="text-decoration:none">واتساب ${WHATSAPP_DISPLAY}</a>
+      </div></div>
+    <div class="card" style="border-color:rgba(239,68,68,.35)"><div class="card-head"><h3 style="color:var(--red)">منطقة الخطر</h3></div>
       <div class="card-body">
         <button class="btn danger full" onclick="wipeData()">حذف جميع البيانات</button>
-      </div>
-    </div>`;
+      </div></div>`;
 }
 
-function saveProfile() {
+async function saveProfile() {
   const name = $('#sName').value.trim();
-  const phone = $('#sPhone').value.trim();
   if (name.length < 2) return toast('الاسم قصير', 'err');
-  const users = STORE.get(K.users, []);
-  if (users.some(x => x.phone === phone && x.id !== state.user.id)) return toast('الرقم مستخدم', 'err');
-  const u = users.find(x => x.id === state.user.id);
-  u.name = name; u.phone = phone;
-  STORE.set(K.users, users);
-  state.user = u;
+  await fbUpdate('users/' + state.user.id, { name });
+  state.user.name = name;
   updateSidebar();
   toast('تم الحفظ');
 }
 
-function changePass() {
+async function changePass() {
   const oldP = $('#sOld').value, newP = $('#sNew').value;
-  const users = STORE.get(K.users, []);
-  const u = users.find(x => x.id === state.user.id);
-  if (u.pass !== hash(oldP + 'ldg')) return toast('كلمة المرور الحالية خاطئة', 'err');
-  if (newP.length < 4)               return toast('كلمة المرور الجديدة قصيرة', 'err');
-  u.pass = hash(newP + 'ldg');
-  STORE.set(K.users, users);
+  if (state.user.pass !== hash(oldP + 'ldg')) return toast('كلمة المرور الحالية خاطئة', 'err');
+  if (newP.length < 4) return toast('كلمة المرور الجديدة قصيرة', 'err');
+  await fbUpdate('users/' + state.user.id, { pass: hash(newP + 'ldg') });
+  state.user.pass = hash(newP + 'ldg');
   toast('تم التغيير');
   $('#sOld').value = ''; $('#sNew').value = '';
 }
 
-function saveCurrency() {
+async function saveCurrency() {
   state.data.settings.currency = $('#sCur').value.trim() || 'ر.س';
-  saveData(); toast('تم الحفظ');
+  await saveData(); toast('تم الحفظ');
 }
 
 function exportData() {
-  const payload = {
-    user: { name: state.user.name, phone: state.user.phone },
-    data: state.data,
-    exportedAt: new Date().toISOString()
-  };
+  const payload = { user: { name: state.user.name, phone: state.user.phone }, data: state.data, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1727,49 +1258,23 @@ function exportData() {
   toast('تم التصدير');
 }
 
-function importData(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const json = JSON.parse(ev.target.result);
-      if (!json.data) throw new Error();
-      state.data = {
-        customers: json.data.customers || [],
-        transactions: json.data.transactions || [],
-        ledger: json.data.ledger || [],
-        items: json.data.items || [],
-        settings: json.data.settings || { currency: 'ر.س' }
-      };
-      saveData();
-      toast('تم الاستيراد');
-      renderView();
-    } catch { toast('ملف غير صالح', 'err'); }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-}
-
 function wipeData() {
   openModal({
     title: 'حذف كل البيانات',
-    body: `<p style="line-height:1.8">سيتم حذف جميع العملاء والحركات والمواد نهائياً.<br>
-      <b style="color:var(--red)">لا يمكن التراجع!</b></p>`,
-    submitText: 'نعم، احذف الكل', danger: true,
-    onSubmit: () => {
+    body: '<p style="line-height:1.8">سيتم حذف كل العملاء والحركات والمواد من السحابة.<br><b style="color:var(--red)">لا يمكن التراجع!</b></p>',
+    submitText: 'حذف الكل', danger: true,
+    onSubmit: async () => {
       state.data = { customers: [], transactions: [], ledger: [], items: [], settings: { currency: 'ر.س' } };
-      saveData(); toast('تم الحذف', 'err'); renderView();
+      await saveData(); toast('تم الحذف', 'err'); renderView();
     }
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   لوحة الأدمن
-   ═══════════════════════════════════════════════════════ */
-function renderAdmin() {
-  const users = STORE.get(K.users, []);
-  const codes = STORE.get(K.codes, []).slice().reverse();
+async function renderAdmin() {
+  const usersSnap = await fbGet('users');
+  const users = usersSnap ? Object.values(usersSnap) : [];
+  const codesSnap = await fbGet('codes');
+  const codes = codesSnap ? Object.values(codesSnap).reverse() : [];
   const available = codes.filter(c => !c.used);
   const activeSubs = users.filter(u => subInfo(u).active).length;
   const expiredSubs = users.length - activeSubs;
@@ -1777,119 +1282,78 @@ function renderAdmin() {
   $('#adminRoot').innerHTML = `
     <div class="admin-header">
       <div class="ic">🛡️</div>
-      <div>
-        <h2>لوحة التحكم الكاملة</h2>
-        <p>إدارة المستخدمين وأكواد التفعيل</p>
-      </div>
+      <div><h2>لوحة التحكم الكاملة</h2><p>بيانات حقيقية من السحابة</p></div>
     </div>
-
     <div class="grid stats" style="margin-bottom:16px">
-      <div class="stat">
-        <div class="lbl">إجمالي المستخدمين</div>
-        <div class="val">${users.length}</div>
-      </div>
-      <div class="stat g">
-        <div class="lbl">اشتراكات نشطة</div>
-        <div class="val">${activeSubs}</div>
-      </div>
-      <div class="stat r">
-        <div class="lbl">اشتراكات منتهية</div>
-        <div class="val">${expiredSubs}</div>
-      </div>
-      <div class="stat a">
-        <div class="lbl">أكواد متاحة</div>
-        <div class="val">${available.length}</div>
-        <div class="sub">من ${codes.length} كود</div>
-      </div>
+      <div class="stat"><div class="lbl">المستخدمون</div><div class="val">${users.length}</div></div>
+      <div class="stat g"><div class="lbl">نشط</div><div class="val">${activeSubs}</div></div>
+      <div class="stat r"><div class="lbl">منتهي</div><div class="val">${expiredSubs}</div></div>
+      <div class="stat a"><div class="lbl">أكواد متاحة</div><div class="val">${available.length}</div>
+        <div class="sub">من ${codes.length}</div></div>
     </div>
-
     <div class="card" style="margin-bottom:16px">
-      <div class="card-head">
-        <h3>المستخدمون (${users.length})</h3>
-      </div>
+      <div class="card-head"><h3>المستخدمون</h3></div>
       <div class="table-wrap">
-        ${users.length ? `<table>
-          <thead><tr><th>المستخدم</th><th>الخطة</th><th>المتبقي</th><th style="text-align:left">تمديد</th></tr></thead>
+        ${users.length ? `<table><thead><tr><th>المستخدم</th><th>الخطة</th><th>المتبقي</th><th style="text-align:left">تمديد</th></tr></thead>
           <tbody>${users.map(u => {
             const si = subInfo(u);
             return `<tr>
-              <td><div class="cell-user">
-                <div class="avatar">${esc(initials(u.name))}</div>
-                <div style="min-width:0">
-                  <b>${esc(u.name)}</b>
-                  <small>${esc(u.phone)}</small>
-                </div>
-              </div></td>
-              <td><span class="pill ${si.active ? 'pay' : 'debt'}">${si.planName}</span>
-                <div style="font-size:11px;color:var(--muted);margin-top:3px">${fmtDate(si.endDate)}</div>
-              </td>
-              <td style="font-size:12.5px">${si.active ? si.daysLeft + ' يوم' : '—'}</td>
+              <td><div class="cell-user"><div class="avatar">${esc(initials(u.name))}</div>
+                <div style="min-width:0"><b>${esc(u.name)}</b><small>${esc(u.phone)}</small></div></div></td>
+              <td><span class="pill ${si.active?'pay':'debt'}">${si.planName}</span>
+                <div style="font-size:11px;color:var(--muted);margin-top:3px">${fmtDate(si.endDate)}</div></td>
+              <td style="font-size:12.5px">${si.active?si.daysLeft+' يوم':'—'}</td>
               <td><div class="actions" style="flex-wrap:wrap">
-                ${PLANS.map(p => `<button class="btn sm ghost" onclick="adminExtend('${u.id}','${p.id}',${p.days})" title="${p.name}">+${p.days}</button>`).join('')}
-                <button class="icon-btn" onclick="adminDeleteUser('${u.id}')" title="حذف">🗑️</button>
+                ${PLANS.map(p => `<button class="btn sm ghost" onclick="adminExtend('${u.phone}','${p.id}',${p.days})">+${p.days}</button>`).join('')}
               </div></td>
             </tr>`;
-          }).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">👥</span>لا يوجد مستخدمون</div>`}
+          }).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">👥</span>لا مستخدمون</div>`}
       </div>
     </div>
-
     <div class="card">
-      <div class="card-head">
-        <h3>أكواد التفعيل</h3>
+      <div class="card-head"><h3>الأكواد (${available.length} متاح)</h3>
         <div style="display:flex;gap:6px">
-          <button class="btn ghost sm" onclick="resetPresetCodes()">استعادة الأكواد</button>
+          <button class="btn ghost sm" onclick="resetPresetCodes()">استعادة</button>
           <button class="btn primary sm" onclick="openCodeGen()">+ توليد</button>
         </div>
       </div>
       <div class="table-wrap">
-        ${codes.length ? `<table>
-          <thead><tr><th>الكود</th><th>الخطة</th><th>الحالة</th><th></th></tr></thead>
+        ${codes.length ? `<table><thead><tr><th>الكود</th><th>الخطة</th><th>الحالة</th><th></th></tr></thead>
           <tbody>${codes.map(c => `<tr>
-            <td><span class="code-chip ${c.used ? 'code-used' : ''}">${esc(c.code)}</span></td>
+            <td><span class="code-chip ${c.used?'code-used':''}">${esc(c.code)}</span></td>
             <td>${esc(planById(c.plan).name)}<br><small class="muted">${c.days} يوم</small></td>
-            <td><span class="pill ${c.used ? 'debt' : 'pay'}">${c.used ? 'مستخدم' : 'متاح'}</span></td>
+            <td><span class="pill ${c.used?'debt':'pay'}">${c.used?'مستخدم':'متاح'}</span></td>
             <td><div class="actions">
-              ${!c.used ? `<button class="icon-btn" onclick="copyCode('${c.code}')" title="نسخ">📋</button>` : ''}
-              <button class="icon-btn" onclick="delCode('${c.code}')" title="حذف">🗑️</button>
+              ${!c.used?`<button class="icon-btn" onclick="copyCode('${c.code}')">📋</button>`:''}
+              <button class="icon-btn" onclick="delCode('${c.code}')">🗑️</button>
             </div></td>
-          </tr>`).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">🎟️</span>لا توجد أكواد</div>`}
+          </tr>`).join('')}</tbody></table>` : `<div class="empty">لا أكواد</div>`}
       </div>
     </div>`;
 }
 
 function copyCode(code) {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(code).then(() => toast('تم النسخ'));
-  } else {
-    const ta = document.createElement('textarea');
-    ta.value = code; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy'); ta.remove();
-    toast('تم النسخ');
-  }
+  if (navigator.clipboard) navigator.clipboard.writeText(code).then(() => toast('تم النسخ'));
+  else toast('انسخ يدوياً: ' + code);
 }
 
-function adminExtend(userId, planId, days) {
-  extendSubscription(userId, planId, days);
-  toast('تم التمديد');
-  renderAdmin();
-}
-
-function adminDeleteUser(userId) {
-  const users = STORE.get(K.users, []);
-  const u = users.find(x => x.id === userId);
-  if (!u) return;
-  openModal({
-    title: 'حذف المستخدم',
-    body: `<p style="line-height:1.8">حذف المستخدم <b>${esc(u.name)}</b> وجميع بياناته؟<br>
-      <b style="color:var(--red)">لا يمكن التراجع!</b></p>`,
-    submitText: 'حذف', danger: true,
-    onSubmit: () => {
-      STORE.set(K.users, users.filter(x => x.id !== userId));
-      STORE.del(K.data(userId));
-      toast('تم الحذف', 'err');
-      renderAdmin();
-    }
-  });
+async function adminExtend(phone, planId, days) {
+  try {
+    const user = await fbGet('users/' + phone);
+    if (!user) return toast('المستخدم غير موجود', 'err');
+    const now = Date.now();
+    const curEnd = new Date(user.subscription?.endDate || 0).getTime();
+    const base = curEnd > now ? curEnd : now;
+    const newSub = {
+      plan: planId,
+      startDate: now,
+      endDate: base + days * DAY,
+      history: [...(user.subscription?.history||[]), { plan: planId, days, at: now }]
+    };
+    await fbUpdate('users/' + phone, { subscription: newSub });
+    toast('تم التمديد');
+    renderAdmin();
+  } catch (e) { toast('خطأ', 'err'); }
 }
 
 function openCodeGen() {
@@ -1897,111 +1361,108 @@ function openCodeGen() {
     title: 'توليد أكواد',
     body: `
       <label>الخطة</label>
-      <select id="genPlan">
-        ${PLANS.map(p => `<option value="${p.id}">${p.name} — ${p.days} يوم — $${p.price}</option>`).join('')}
-      </select>
-      <label>عدد الأكواد</label>
+      <select id="genPlan">${PLANS.map(p => `<option value="${p.id}">${p.name} — ${p.days} يوم</option>`).join('')}</select>
+      <label>العدد</label>
       <input id="genCount" type="number" value="10" min="1" max="100" inputmode="numeric">`,
     submitText: 'توليد',
-    onSubmit: form => {
+    onSubmit: async form => {
       const planId = $('#genPlan', form).value;
-      const count = Math.min(100, Math.max(1, parseInt($('#genCount', form).value) || 1));
+      const count = Math.min(100, Math.max(1, parseInt($('#genCount', form).value)||1));
       const p = planById(planId);
-      const codes = STORE.get(K.codes, []);
-      const newCodes = [];
+      const updates = {};
       for (let i = 0; i < count; i++) {
-        const r1 = Math.random().toString(36).slice(2, 6).toUpperCase();
-        const r2 = Math.random().toString(36).slice(2, 6).toUpperCase();
+        const r1 = Math.random().toString(36).slice(2,6).toUpperCase();
+        const r2 = Math.random().toString(36).slice(2,6).toUpperCase();
         const code = `LED-${p.id.toUpperCase()}-${r1}${r2}`;
-        codes.push({ code, plan: planId, days: p.days, used: false, createdAt: Date.now() });
-        newCodes.push(code);
+        updates['codes/' + code] = { code, plan: planId, days: p.days, used: false, createdAt: Date.now() };
       }
-      STORE.set(K.codes, codes);
+      await fbUpdate('/', updates);
       toast(`تم توليد ${count} كود`);
       renderAdmin();
     }
   });
 }
 
-function delCode(code) {
-  openModal({
-    title: 'حذف كود',
-    body: `<p>حذف الكود <b style="direction:ltr;display:inline-block">${esc(code)}</b>؟</p>`,
-    submitText: 'حذف', danger: true,
-    onSubmit: () => {
-      STORE.set(K.codes, STORE.get(K.codes, []).filter(c => c.code !== code));
-      renderAdmin(); toast('تم الحذف', 'err');
-    }
-  });
+async function delCode(code) {
+  await fbRemove('codes/' + code);
+  renderAdmin(); toast('تم الحذف', 'err');
 }
 
 function resetPresetCodes() {
   openModal({
-    title: 'استعادة الأكواد الأصلية',
-    body: `<p style="line-height:1.8">سيتم استبدال كل الأكواد بـ <b>100 كود جديد</b>.<br>
-      الأكواد الحالية ستفقد حالتها.</p>`,
+    title: 'استعادة الأكواد',
+    body: `<p style="line-height:1.8">سيتم استبدال كل الأكواد بـ <b>100 كود جديد</b>.</p>`,
     submitText: 'استعادة', danger: true,
-    onSubmit: () => {
+    onSubmit: async () => {
       const now = Date.now();
-      STORE.set(K.codes, PRESET_CODES.map((code, i) => {
+      const codeObj = {};
+      PRESET_CODES.forEach((code, i) => {
         const plan = planFromCode(code);
-        return { code, plan, days: planById(plan).days, used: false, createdAt: now - i * 1000 };
-      }));
+        codeObj[code] = { code, plan, days: planById(plan).days, used: false, createdAt: now - i*1000 };
+      });
+      await fbSet('codes', codeObj);
       renderAdmin(); toast('تم الاستعادة');
     }
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   نظام النوافذ (Modals)
-   ═══════════════════════════════════════════════════════ */
-function closeAllModals() {
-  $$('.overlay').forEach(o => o.remove());
-}
+function closeAllModals() { $$('.overlay').forEach(o => o.remove()); }
 
-function openModal({ title, body, submitText = 'حفظ', onSubmit, wide = false, danger = false, onMount }) {
+function openModal({ title, body, submitText = 'حفظ', onSubmit, danger = false, onMount }) {
   closeAllModals();
   const ov = document.createElement('div');
   ov.className = 'overlay';
   const hasSubmit = submitText !== null;
   ov.innerHTML = `
     <div class="modal">
-      <div class="modal-head">
-        <h3>${title}</h3>
-        <button type="button" class="icon-btn" data-close>×</button>
-      </div>
+      <div class="modal-head"><h3>${title}</h3>
+        <button type="button" class="icon-btn" data-close>×</button></div>
       <form class="modal-body">
         ${body}
         <div class="modal-foot">
-          <button type="button" class="btn ghost" data-close>${hasSubmit ? 'إلغاء' : 'إغلاق'}</button>
-          ${hasSubmit ? `<button type="submit" class="btn ${danger ? 'danger' : 'primary'}">${submitText}</button>` : ''}
+          <button type="button" class="btn ghost" data-close>${hasSubmit?'إلغاء':'إغلاق'}</button>
+          ${hasSubmit?`<button type="submit" class="btn ${danger?'danger':'primary'}">${submitText}</button>`:''}
         </div>
       </form>
     </div>`;
   document.body.appendChild(ov);
-
   const close = () => ov.remove();
   $$('[data-close]', ov).forEach(b => b.addEventListener('click', close));
   ov.addEventListener('mousedown', e => { if (e.target === ov) close(); });
-
   const form = $('form', ov);
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
-    if (onSubmit(form) !== false) close();
+    const r = await onSubmit(form);
+    if (r !== false) close();
   });
-
   if (onMount) onMount(form);
-  setTimeout(() => {
-    const f = $('input:not([type="hidden"]),select,textarea', form);
-    if (f) f.focus();
-  }, 100);
+  setTimeout(() => { const f = $('input:not([disabled]),select,textarea', form); if (f) f.focus(); }, 100);
   return close;
 }
 
-/* ═══════════════════════════════════════════════════════
-   بدء التطبيق
-   ═══════════════════════════════════════════════════════ */
-route();
+(async () => {
+  try {
+    await initCodesIfNeeded();
+    await new Promise(r => setTimeout(r, 400));
+    hideAll();
+    await route();
+  } catch (e) {
+    console.error('خطأ التهيئة:', e);
+    $('#loadingScreen').innerHTML = `
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:50px;margin-bottom:14px">⚠️</div>
+        <h3 style="margin-bottom:10px">خطأ في الاتصال بـ Firebase</h3>
+        <p style="color:var(--muted);font-size:14px;line-height:1.7">
+          تأكد من:<br>
+          • صحة إعدادات firebaseConfig<br>
+          • تفعيل Realtime Database<br>
+          • قواعد الأمان منشورة
+        </p>
+        <p style="color:var(--red);font-size:12px;margin-top:14px;word-break:break-all">${e.message}</p>
+        <button class="btn primary" style="margin-top:18px" onclick="location.reload()">إعادة المحاولة</button>
+      </div>`;
+  }
+})();
 </script>
 </body>
 </html>

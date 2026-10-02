@@ -6,8 +6,16 @@
 <meta name="theme-color" content="#4f46e5">
 <title>دفتر الحسابات</title>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+// تحميل Firebase SDK مع اكتشاف الفشل
+window.__fbLoaded = false;
+window.__fbError = null;
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onerror="window.__fbError='فشل تحميل firebase-app'"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js" onerror="window.__fbError='فشل تحميل firebase-database'"></script>
+<script>
+window.__fbLoaded = (typeof firebase !== 'undefined');
+</script>
 
 <style>
 :root{
@@ -156,6 +164,7 @@ td{padding:13px 14px;border-top:1px solid var(--border);vertical-align:middle}
 @media(min-width:600px){#toasts{inset-inline-end:auto;max-width:340px}}
 .toast{background:var(--card);border:1px solid var(--border);border-inline-start:4px solid var(--green);padding:13px 16px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.14);animation:slide .25s}
 .toast.err{border-inline-start-color:var(--red)}
+.toast.warn{border-inline-start-color:var(--amber)}
 @keyframes slide{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
 
 .lock{position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding:24px 16px}
@@ -176,9 +185,13 @@ td{padding:13px 14px;border-top:1px solid var(--border);vertical-align:middle}
 .row-between{display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:8px;gap:10px;flex-wrap:wrap}
 .row-between span{font-size:13px;font-weight:700;color:var(--muted)}
 
-.loading{display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:16px;color:var(--muted);flex-direction:column;gap:14px}
+.loading{display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:16px;color:var(--muted);flex-direction:column;gap:14px;padding:20px;text-align:center}
 .spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* شريط تشخيص صغير */
+#diagBar{position:fixed;bottom:calc(var(--nav-h) + 10px);inset-inline-start:10px;z-index:500;background:#000;color:#0f0;font-size:10px;padding:4px 8px;border-radius:6px;font-family:monospace;direction:ltr;max-width:80%;overflow:hidden;white-space:nowrap;opacity:.85}
+#diagBar.err{background:#600;color:#fff}
 </style>
 </head>
 <body>
@@ -186,6 +199,7 @@ td{padding:13px 14px;border-top:1px solid var(--border);vertical-align:middle}
 <div id="loadingScreen" class="loading">
   <div class="spinner"></div>
   <div>جاري التحميل...</div>
+  <div id="loadingMsg" style="font-size:13px;opacity:.7">...</div>
 </div>
 
 <div id="authScreen" class="auth hidden">
@@ -293,11 +307,10 @@ td{padding:13px 14px;border-top:1px solid var(--border);vertical-align:middle}
 </div>
 
 <div id="toasts"></div>
+<div id="diagBar" class="hidden"></div>
 
 <script>
-/* ═══════════════════════════════════════════════════════
-   ✅ إعدادات Firebase (مدمجة وجاهزة)
-   ═══════════════════════════════════════════════════════ */
+/* ═══ إعدادات Firebase ═══ */
 const firebaseConfig = {
   apiKey: "AIzaSyDZXHx-D-UMHmWE_PVZy-GfKDQJmc1rl0g",
   authDomain: "business-ledger-f14ea.firebaseapp.com",
@@ -308,10 +321,18 @@ const firebaseConfig = {
   appId: "1:1073226216304:web:4277c57ec1afcd896995b5"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+/* ═══ أدوات التشخيص ═══ */
+function diag(msg, isErr) {
+  console.log('[DIAG]', msg);
+  const bar = document.getElementById('diagBar');
+  if (bar) {
+    bar.textContent = msg;
+    bar.classList.remove('hidden');
+    bar.classList.toggle('err', !!isErr);
+  }
+}
 
-/* ═══════════════════════════════════════════════════════ */
+/* ═══ أدوات عامة ═══ */
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -322,10 +343,21 @@ const WHATSAPP_DISPLAY = '0992320306';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'aalmwt10';
 
+/* تنظيف رقم الهاتف — إزالة كل ما ليس رقماً */
+function sanitizePhone(p) {
+  return String(p || '').replace(/[^0-9]/g, '');
+}
+
 const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function hash(str) { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h) + str.charCodeAt(i); return (h >>> 0).toString(16); }
 function fmtDate(ts) { const d = new Date(ts), p = n => String(n).padStart(2,'0'); return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`; }
 const todayISO = () => new Date().toISOString().slice(0, 10);
+
+let state = {
+  user: null,
+  data: { customers: [], transactions: [], ledger: [], items: [], settings: { currency: 'ر.س' } },
+  view: 'dashboard'
+};
 const cur = () => (state.data?.settings?.currency) || 'ر.س';
 function money(n) { n = Number(n) || 0; return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + cur(); }
 function initials(name) { return (name || '?').trim().split(/\s+/).slice(0,2).map(w => w[0]).join(''); }
@@ -343,13 +375,7 @@ const STORE = {
   set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
   del(k)    { localStorage.removeItem(k); }
 };
-const K = { session:'ldg_sess_v3', admin:'ldg_adm_v3', theme:'ldg_theme_v3' };
-
-let state = {
-  user: null,
-  data: { customers: [], transactions: [], ledger: [], items: [], settings: { currency: 'ر.س' } },
-  view: 'dashboard'
-};
+const K = { session:'ldg_sess_v4', admin:'ldg_adm_v4', theme:'ldg_theme_v4' };
 
 const PLANS = [
   { id:'m1',  name:'شهري',   days:30,  price:5  },
@@ -383,25 +409,74 @@ const PRESET_CODES = [
 ];
 const planFromCode = c => ({M:'m1',Q:'m3',H:'m6',Y:'m12'})[c.split('-')[1]] || 'm1';
 
-async function fbGet(path) { const snap = await db.ref(path).once('value'); return snap.val(); }
-async function fbSet(path, val) { await db.ref(path).set(val); }
-async function fbUpdate(path, val) { await db.ref(path).update(val); }
-async function fbRemove(path) { await db.ref(path).remove(); }
+/* ═══ Firebase ═══ */
+let db = null;
+let fbOK = false;
 
-async function initCodesIfNeeded() {
-  const codes = await fbGet('codes');
-  if (!codes || Object.keys(codes).length === 0) {
-    const now = Date.now();
-    const codeObj = {};
-    PRESET_CODES.forEach((code, i) => {
-      const plan = planFromCode(code);
-      codeObj[code] = { code, plan, days: planById(plan).days, used: false, createdAt: now - i * 1000 };
-    });
-    await fbSet('codes', codeObj);
-    console.log('✅ تم إنشاء 100 كود في Firebase');
+function initFirebase() {
+  try {
+    if (typeof firebase === 'undefined') {
+      diag('❌ Firebase SDK لم يُحمّل', true);
+      return false;
+    }
+    if (!firebase.apps || !firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    db = firebase.database();
+    fbOK = true;
+    diag('✅ Firebase متصل');
+    return true;
+  } catch (e) {
+    diag('❌ خطأ: ' + e.message, true);
+    console.error(e);
+    return false;
   }
 }
 
+async function fbGet(path) {
+  if (!db) throw new Error('Firebase غير مهيأ');
+  const snap = await db.ref(path).once('value');
+  return snap.val();
+}
+async function fbSet(path, val) {
+  if (!db) throw new Error('Firebase غير مهيأ');
+  await db.ref(path).set(val);
+}
+async function fbUpdate(path, val) {
+  if (!db) throw new Error('Firebase غير مهيأ');
+  await db.ref(path).update(val);
+}
+async function fbRemove(path) {
+  if (!db) throw new Error('Firebase غير مهيأ');
+  await db.ref(path).remove();
+}
+
+/* ═══ تهيئة الأكواد ═══ */
+async function initCodesIfNeeded() {
+  try {
+    diag('🔍 جاري فحص الأكواد...');
+    const codes = await fbGet('codes');
+    if (!codes || Object.keys(codes).length === 0) {
+      diag('📝 إنشاء 100 كود...');
+      const now = Date.now();
+      const codeObj = {};
+      PRESET_CODES.forEach((code, i) => {
+        const plan = planFromCode(code);
+        codeObj[code] = { code, plan, days: planById(plan).days, used: false, createdAt: now - i * 1000 };
+      });
+      await fbSet('codes', codeObj);
+      diag('✅ تم إنشاء 100 كود');
+    } else {
+      diag('✅ الأكواد موجودة (' + Object.keys(codes).length + ')');
+    }
+  } catch (e) {
+    diag('❌ فشل الأكواد: ' + e.message, true);
+    console.error(e);
+    throw e;
+  }
+}
+
+/* ═══ الاشتراك ═══ */
 function subInfo(u) {
   const s = u.subscription || {};
   const end = new Date(s.endDate || 0).getTime();
@@ -416,6 +491,7 @@ function subInfo(u) {
   };
 }
 
+/* ═══ الشاشات ═══ */
 function hideAll() {
   ['loadingScreen','authScreen','adminLoginScreen','appScreen','lockScreen','adminScreen']
     .forEach(id => { const el = $('#' + id); if (el) el.classList.add('hidden'); });
@@ -444,9 +520,14 @@ async function route() {
   }
 
   try {
+    diag('🔍 قراءة بيانات المستخدم...');
     const user = await fbGet('users/' + sess.phone);
-    if (!user) { STORE.del(K.session); hideAll(); $('#authScreen').classList.remove('hidden'); return; }
-
+    if (!user) {
+      STORE.del(K.session);
+      hideAll();
+      $('#authScreen').classList.remove('hidden');
+      return;
+    }
     state.user = { ...user, id: sess.phone };
 
     const data = await fbGet('userData/' + sess.phone);
@@ -468,9 +549,11 @@ async function route() {
       renderView();
       updateThemeBtn();
     }
+    diag('✅ تم التحميل');
   } catch (e) {
+    diag('❌ ' + e.message, true);
     console.error(e);
-    toast('خطأ في الاتصال: ' + e.message, 'err');
+    toast('خطأ: ' + e.message, 'err');
     hideAll();
     $('#authScreen').classList.remove('hidden');
   }
@@ -480,10 +563,17 @@ window.addEventListener('hashchange', route);
 async function saveData() {
   if (!state.user) return;
   try {
+    diag('💾 حفظ البيانات...');
     await fbSet('userData/' + state.user.id, state.data);
-  } catch (e) { console.error('فشل الحفظ:', e); toast('فشل الحفظ', 'err'); }
+    diag('✅ تم الحفظ');
+  } catch (e) {
+    diag('❌ فشل الحفظ: ' + e.message, true);
+    console.error('فشل الحفظ:', e);
+    toast('فشل الحفظ: ' + e.message, 'err');
+  }
 }
 
+/* ═══ التبويبات ═══ */
 $$('.tab').forEach(t => t.addEventListener('click', () => {
   $$('.tab').forEach(x => x.classList.remove('active'));
   t.classList.add('active');
@@ -492,22 +582,30 @@ $$('.tab').forEach(t => t.addEventListener('click', () => {
   $('#registerForm').classList.toggle('hidden', isLogin);
 }));
 
+/* ═══ التسجيل ═══ */
 $('#registerForm').addEventListener('submit', async e => {
   e.preventDefault();
   const name = $('#regName').value.trim();
-  const phone = $('#regPhone').value.trim();
+  const rawPhone = $('#regPhone').value.trim();
+  const phone = sanitizePhone(rawPhone);
   const pass = $('#regPass').value;
   const pass2 = $('#regPass2').value;
 
+  diag('🔵 بدء التسجيل...');
+
   if (name.length < 2) return toast('الاسم قصير', 'err');
-  if (!/^[0-9+\-\s]{6,15}$/.test(phone)) return toast('رقم غير صالح', 'err');
+  if (phone.length < 6) return toast('رقم غير صالح (6 أرقام على الأقل)', 'err');
   if (pass.length < 4) return toast('كلمة المرور قصيرة', 'err');
   if (pass !== pass2) return toast('كلمتا المرور مختلفتان', 'err');
 
+  if (!fbOK) return toast('Firebase غير متصل — راجع التشخيص', 'err');
+
   try {
+    diag('🔍 فحص الرقم...');
     const exists = await fbGet('users/' + phone);
     if (exists) return toast('الرقم مسجّل مسبقاً', 'err');
 
+    diag('💾 حفظ المستخدم في Firebase...');
     const now = Date.now();
     await fbSet('users/' + phone, {
       name, phone,
@@ -515,32 +613,47 @@ $('#registerForm').addEventListener('submit', async e => {
       createdAt: now,
       subscription: { plan: 'trial', startDate: now, endDate: now + 3 * DAY, history: [] }
     });
-    await fbSet('userData/' + phone, { customers: [], transactions: [], ledger: [], items: [], settings: { currency: 'ر.س' } });
+
+    diag('💾 حفظ البيانات الفارغة...');
+    await fbSet('userData/' + phone, {
+      customers: [], transactions: [], ledger: [], items: [],
+      settings: { currency: 'ر.س' }
+    });
+
     STORE.set(K.session, { phone });
+    diag('✅ تم إنشاء الحساب');
     toast('تم إنشاء الحساب 🎉');
-    route();
+    await route();
   } catch (err) {
+    diag('❌ ' + err.message, true);
     console.error(err);
     toast('خطأ: ' + err.message, 'err');
   }
 });
 
+/* ═══ الدخول ═══ */
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const phone = $('#loginPhone').value.trim();
+  const phone = sanitizePhone($('#loginPhone').value);
   const pass = $('#loginPass').value;
+
+  diag('🔵 محاولة دخول...');
+  if (!phone) return toast('أدخل رقم الهاتف', 'err');
+  if (!fbOK) return toast('Firebase غير متصل', 'err');
 
   try {
     const user = await fbGet('users/' + phone);
     if (!user || user.pass !== hash(pass + 'ldg')) return toast('الرقم أو كلمة المرور خاطئة', 'err');
     STORE.set(K.session, { phone });
     toast('مرحباً ' + user.name);
-    route();
+    await route();
   } catch (err) {
+    diag('❌ ' + err.message, true);
     toast('خطأ: ' + err.message, 'err');
   }
 });
 
+/* ═══ الأدمن ═══ */
 $('#adminLoginForm').addEventListener('submit', e => {
   e.preventDefault();
   if ($('#admUser').value.trim() !== ADMIN_USER || $('#admPass').value !== ADMIN_PASS)
@@ -648,6 +761,7 @@ function ledgerStats(e) {
 }
 function isToday(ts) { const d = new Date(ts), n = new Date(); return d.getDate()===n.getDate() && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear(); }
 
+/* ═══ لوحة التحكم ═══ */
 function renderDashboard() {
   const t = totals();
   const todayStats = ledgerStats((state.data.ledger || []).filter(e => isToday(e.date)));
@@ -703,6 +817,7 @@ function renderDashboard() {
     </div>`;
 }
 
+/* ═══ العملاء ═══ */
 let custQuery = '';
 function renderCustomers() {
   $('#topActions').innerHTML = `<button class="btn primary sm" onclick="openCustomerModal()">+ عميل</button>`;
@@ -826,6 +941,7 @@ function openStatement(id) {
   });
 }
 
+/* ═══ الحركات ═══ */
 let txFilter = 'all';
 function renderTransactions() {
   $('#topActions').innerHTML = `
@@ -948,6 +1064,7 @@ function openTxModal(type, customerId) {
   });
 }
 
+/* ═══ الأرباح والخسائر ═══ */
 let ledgerFilter = 'today';
 function renderLedger() {
   $('#topActions').innerHTML = `
@@ -1031,6 +1148,7 @@ function deleteLedger(id) {
   });
 }
 
+/* ═══ المواد ═══ */
 function renderItems() {
   $('#topActions').innerHTML = `<button class="btn primary sm" onclick="openItemModal()">+ مادة</button>`;
   $('#viewRoot').innerHTML = `
@@ -1085,6 +1203,7 @@ function deleteItem(id) {
   });
 }
 
+/* ═══ الاشتراك ═══ */
 function plansHTML() {
   return `
     <div class="wa-box">
@@ -1148,6 +1267,7 @@ async function redeemCode(inputId) {
   if (!code) return toast('أدخل الكود', 'err');
 
   try {
+    diag('🎟️ تفعيل كود...');
     const found = await fbGet('codes/' + code);
     if (!found) return toast('كود غير صالح', 'err');
     if (found.used) return toast('مستخدم مسبقاً', 'err');
@@ -1167,7 +1287,8 @@ async function redeemCode(inputId) {
     toast('تم التفعيل 🎉');
     setTimeout(() => location.reload(), 900);
   } catch (e) {
-    console.error(e); toast('خطأ: ' + e.message, 'err');
+    diag('❌ ' + e.message, true);
+    toast('خطأ: ' + e.message, 'err');
   }
 }
 
@@ -1189,6 +1310,7 @@ function renderLock() {
     </div>`;
 }
 
+/* ═══ الإعدادات ═══ */
 function renderSettings() {
   const u = state.user;
   $('#viewRoot').innerHTML = `
@@ -1270,66 +1392,77 @@ function wipeData() {
   });
 }
 
+/* ═══ لوحة الأدمن ═══ */
 async function renderAdmin() {
-  const usersSnap = await fbGet('users');
-  const users = usersSnap ? Object.values(usersSnap) : [];
-  const codesSnap = await fbGet('codes');
-  const codes = codesSnap ? Object.values(codesSnap).reverse() : [];
-  const available = codes.filter(c => !c.used);
-  const activeSubs = users.filter(u => subInfo(u).active).length;
-  const expiredSubs = users.length - activeSubs;
+  try {
+    diag('🔍 قراءة المستخدمين...');
+    const usersSnap = await fbGet('users');
+    const users = usersSnap ? Object.values(usersSnap) : [];
+    const codesSnap = await fbGet('codes');
+    const codes = codesSnap ? Object.values(codesSnap).reverse() : [];
+    const available = codes.filter(c => !c.used);
+    const activeSubs = users.filter(u => subInfo(u).active).length;
+    const expiredSubs = users.length - activeSubs;
 
-  $('#adminRoot').innerHTML = `
-    <div class="admin-header">
-      <div class="ic">🛡️</div>
-      <div><h2>لوحة التحكم الكاملة</h2><p>بيانات حقيقية من السحابة</p></div>
-    </div>
-    <div class="grid stats" style="margin-bottom:16px">
-      <div class="stat"><div class="lbl">المستخدمون</div><div class="val">${users.length}</div></div>
-      <div class="stat g"><div class="lbl">نشط</div><div class="val">${activeSubs}</div></div>
-      <div class="stat r"><div class="lbl">منتهي</div><div class="val">${expiredSubs}</div></div>
-      <div class="stat a"><div class="lbl">أكواد متاحة</div><div class="val">${available.length}</div>
-        <div class="sub">من ${codes.length}</div></div>
-    </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-head"><h3>المستخدمون</h3></div>
-      <div class="table-wrap">
-        ${users.length ? `<table><thead><tr><th>المستخدم</th><th>الخطة</th><th>المتبقي</th><th style="text-align:left">تمديد</th></tr></thead>
-          <tbody>${users.map(u => {
-            const si = subInfo(u);
-            return `<tr>
-              <td><div class="cell-user"><div class="avatar">${esc(initials(u.name))}</div>
-                <div style="min-width:0"><b>${esc(u.name)}</b><small>${esc(u.phone)}</small></div></div></td>
-              <td><span class="pill ${si.active?'pay':'debt'}">${si.planName}</span>
-                <div style="font-size:11px;color:var(--muted);margin-top:3px">${fmtDate(si.endDate)}</div></td>
-              <td style="font-size:12.5px">${si.active?si.daysLeft+' يوم':'—'}</td>
-              <td><div class="actions" style="flex-wrap:wrap">
-                ${PLANS.map(p => `<button class="btn sm ghost" onclick="adminExtend('${u.phone}','${p.id}',${p.days})">+${p.days}</button>`).join('')}
-              </div></td>
-            </tr>`;
-          }).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">👥</span>لا مستخدمون</div>`}
+    $('#adminRoot').innerHTML = `
+      <div class="admin-header">
+        <div class="ic">🛡️</div>
+        <div><h2>لوحة التحكم الكاملة</h2><p>بيانات حقيقية من السحابة</p></div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><h3>الأكواد (${available.length} متاح)</h3>
-        <div style="display:flex;gap:6px">
-          <button class="btn ghost sm" onclick="resetPresetCodes()">استعادة</button>
-          <button class="btn primary sm" onclick="openCodeGen()">+ توليد</button>
+      <div class="grid stats" style="margin-bottom:16px">
+        <div class="stat"><div class="lbl">المستخدمون</div><div class="val">${users.length}</div></div>
+        <div class="stat g"><div class="lbl">نشط</div><div class="val">${activeSubs}</div></div>
+        <div class="stat r"><div class="lbl">منتهي</div><div class="val">${expiredSubs}</div></div>
+        <div class="stat a"><div class="lbl">أكواد متاحة</div><div class="val">${available.length}</div>
+          <div class="sub">من ${codes.length}</div></div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-head"><h3>المستخدمون</h3></div>
+        <div class="table-wrap">
+          ${users.length ? `<table><thead><tr><th>المستخدم</th><th>الخطة</th><th>المتبقي</th><th style="text-align:left">تمديد</th></tr></thead>
+            <tbody>${users.map(u => {
+              const si = subInfo(u);
+              return `<tr>
+                <td><div class="cell-user"><div class="avatar">${esc(initials(u.name))}</div>
+                  <div style="min-width:0"><b>${esc(u.name)}</b><small>${esc(u.phone)}</small></div></div></td>
+                <td><span class="pill ${si.active?'pay':'debt'}">${si.planName}</span>
+                  <div style="font-size:11px;color:var(--muted);margin-top:3px">${fmtDate(si.endDate)}</div></td>
+                <td style="font-size:12.5px">${si.active?si.daysLeft+' يوم':'—'}</td>
+                <td><div class="actions" style="flex-wrap:wrap">
+                  ${PLANS.map(p => `<button class="btn sm ghost" onclick="adminExtend('${u.phone}','${p.id}',${p.days})">+${p.days}</button>`).join('')}
+                </div></td>
+              </tr>`;
+            }).join('')}</tbody></table>` : `<div class="empty"><span class="e-ico">👥</span>لا مستخدمون</div>`}
         </div>
       </div>
-      <div class="table-wrap">
-        ${codes.length ? `<table><thead><tr><th>الكود</th><th>الخطة</th><th>الحالة</th><th></th></tr></thead>
-          <tbody>${codes.map(c => `<tr>
-            <td><span class="code-chip ${c.used?'code-used':''}">${esc(c.code)}</span></td>
-            <td>${esc(planById(c.plan).name)}<br><small class="muted">${c.days} يوم</small></td>
-            <td><span class="pill ${c.used?'debt':'pay'}">${c.used?'مستخدم':'متاح'}</span></td>
-            <td><div class="actions">
-              ${!c.used?`<button class="icon-btn" onclick="copyCode('${c.code}')">📋</button>`:''}
-              <button class="icon-btn" onclick="delCode('${c.code}')">🗑️</button>
-            </div></td>
-          </tr>`).join('')}</tbody></table>` : `<div class="empty">لا أكواد</div>`}
-      </div>
-    </div>`;
+      <div class="card">
+        <div class="card-head"><h3>الأكواد (${available.length} متاح)</h3>
+          <div style="display:flex;gap:6px">
+            <button class="btn ghost sm" onclick="resetPresetCodes()">استعادة</button>
+            <button class="btn primary sm" onclick="openCodeGen()">+ توليد</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          ${codes.length ? `<table><thead><tr><th>الكود</th><th>الخطة</th><th>الحالة</th><th></th></tr></thead>
+            <tbody>${codes.map(c => `<tr>
+              <td><span class="code-chip ${c.used?'code-used':''}">${esc(c.code)}</span></td>
+              <td>${esc(planById(c.plan).name)}<br><small class="muted">${c.days} يوم</small></td>
+              <td><span class="pill ${c.used?'debt':'pay'}">${c.used?'مستخدم':'متاح'}</span></td>
+              <td><div class="actions">
+                ${!c.used?`<button class="icon-btn" onclick="copyCode('${c.code}')">📋</button>`:''}
+                <button class="icon-btn" onclick="delCode('${c.code}')">🗑️</button>
+              </div></td>
+            </tr>`).join('')}</tbody></table>` : `<div class="empty">لا أكواد</div>`}
+        </div>
+      </div>`;
+    diag('✅ لوحة الأدمن');
+  } catch (e) {
+    diag('❌ ' + e.message, true);
+    $('#adminRoot').innerHTML = `<div class="card"><div class="card-body" style="text-align:center;padding:30px">
+      <p style="color:var(--red);margin-bottom:14px">خطأ: ${esc(e.message)}</p>
+      <button class="btn primary" onclick="renderAdmin()">إعادة المحاولة</button>
+    </div></div>`;
+  }
 }
 
 function copyCode(code) {
@@ -1353,7 +1486,7 @@ async function adminExtend(phone, planId, days) {
     await fbUpdate('users/' + phone, { subscription: newSub });
     toast('تم التمديد');
     renderAdmin();
-  } catch (e) { toast('خطأ', 'err'); }
+  } catch (e) { toast('خطأ: ' + e.message, 'err'); }
 }
 
 function openCodeGen() {
@@ -1406,6 +1539,7 @@ function resetPresetCodes() {
   });
 }
 
+/* ═══ النوافذ ═══ */
 function closeAllModals() { $$('.overlay').forEach(o => o.remove()); }
 
 function openModal({ title, body, submitText = 'حفظ', onSubmit, danger = false, onMount }) {
@@ -1440,25 +1574,44 @@ function openModal({ title, body, submitText = 'حفظ', onSubmit, danger = fals
   return close;
 }
 
+/* ═══ بدء التشغيل ═══ */
 (async () => {
+  const loadingMsg = $('#loadingMsg');
+
   try {
+    if (!window.__fbLoaded) {
+      loadingMsg.innerHTML = '<span style="color:#e11">فشل تحميل Firebase SDK<br><small>تحقق من اتصالك بالإنترنت</small></span>';
+      diag('❌ فشل تحميل Firebase SDK — تأكد من الإنترنت', true);
+      return;
+    }
+
+    loadingMsg.textContent = 'جاري الاتصال بـ Firebase...';
+    if (!initFirebase()) {
+      loadingMsg.innerHTML = '<span style="color:#e11">فشل تهيئة Firebase</span>';
+      return;
+    }
+
+    loadingMsg.textContent = 'جاري فحص الأكواد...';
     await initCodesIfNeeded();
-    await new Promise(r => setTimeout(r, 400));
+
+    loadingMsg.textContent = 'جاري تحميل الواجهة...';
+    await new Promise(r => setTimeout(r, 300));
     hideAll();
     await route();
   } catch (e) {
     console.error('خطأ التهيئة:', e);
+    diag('❌ ' + e.message, true);
     $('#loadingScreen').innerHTML = `
-      <div style="text-align:center;padding:20px">
+      <div style="text-align:center;padding:20px;max-width:600px">
         <div style="font-size:50px;margin-bottom:14px">⚠️</div>
         <h3 style="margin-bottom:10px">خطأ في الاتصال بـ Firebase</h3>
-        <p style="color:var(--muted);font-size:14px;line-height:1.7">
-          تأكد من:<br>
-          • صحة إعدادات firebaseConfig<br>
-          • تفعيل Realtime Database<br>
-          • قواعد الأمان منشورة
+        <p style="color:var(--muted);font-size:14px;line-height:1.7;text-align:right">
+          <b>الخطأ:</b> ${esc(e.message)}<br><br>
+          <b>تحقق من:</b><br>
+          1. قواعد الأمان منشورة (Rules → .read:true, .write:true)<br>
+          2. internet يعمل<br>
+          3. رابط databaseURL صحيح
         </p>
-        <p style="color:var(--red);font-size:12px;margin-top:14px;word-break:break-all">${e.message}</p>
         <button class="btn primary" style="margin-top:18px" onclick="location.reload()">إعادة المحاولة</button>
       </div>`;
   }
